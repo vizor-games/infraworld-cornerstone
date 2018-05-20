@@ -76,7 +76,9 @@ public class MiscTest
         final Random random = new Random();
 
         // Since src wasn't indented, unindenting it will cause no effect
-        random.ints().limit(numAttempts).forEach(randInt -> assertEquals(src, lineWiseUnindent(src, abs(randInt))));
+        random.ints().limit(numAttempts).forEach(randInt -> {
+            assertEquals(src, lineWiseUnindent(src, abs(randInt)));
+        });
 
         // Indent and then unindent, then compare to the source
         for (int i = 0; i < numAttempts; i++)

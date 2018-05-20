@@ -66,7 +66,12 @@ public class Misc
             sb.append(tabs).append(s).append(lineSeparator());
 
         if (split.length > 0)
-            sb.deleteCharAt(sb.length() - 1);
+        {
+            // On Windows systems length of System.lineSeparator() is 2 (\r\n)
+            for (int i = 0; i < lineSeparator().length(); i++) {
+                sb.deleteCharAt(sb.length() - 1);
+            }
+        }
 
         return sb.toString();
     }
@@ -97,7 +102,12 @@ public class Misc
         }
 
         if (split.length > 0)
-            sb.deleteCharAt(sb.length() - 1);
+        {
+            // On Windows systems length of System.lineSeparator() is 2 (\r\n)
+            for (int i = 0; i < lineSeparator().length(); i++) {
+                sb.deleteCharAt(sb.length() - 1);
+            }
+        }
 
         return sb.toString();
     }
