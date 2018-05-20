@@ -1,7 +1,10 @@
 Vizor Infraworld Cornerstone
 ============================
 
-A Cornerstone is a fast and robust converter utility, used to generate UE4-friendly code to provide gRPC functionality
+[![Build Status](https://travis-ci.org/vizor-games/infraworld-cornerstone.svg?branch=master)](https://travis-ci.org/vizor-games/infraworld-cornerstone)
+
+
+Cornerstone is a fast and robust converter utility, used to generate UE4-friendly code to provide gRPC functionality
 into your game. The generated code can be used for both C++ and Blueprints, and thus should be placed into your project's Source or Plugin's source folder to be able
 to be compiled and executed. You shouldn't modify the generated code (at least within normal, not debug conditions). Instead if you want some
 behavior change - you should look into the [Options](#options) section.
@@ -14,7 +17,7 @@ Building
 You need a JDK 8+ installation (we recommend [Java SE Development Kit 8u172](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html),
 but it was tested to be built and ran alongside with Java9 or Java10 as well).
 
-Being written 100% in Java 8, the Cornerstone can be built using Maven ([See how to intstall Maven for Windows](https://maven.apache.org/guides/getting-started/windows-prerequisites.html),
+Being written 100% in Java 8, Cornerstone can be built using Maven ([See how to intstall Maven for Windows](https://maven.apache.org/guides/getting-started/windows-prerequisites.html),
 but I definitely recommend you to use [chocolatey](https://chocolatey.org) for package management).
 
 To build the converter executable and run it's tests, just run:
@@ -29,7 +32,7 @@ Usage
 =====
 
 Since Cornerstone is a quite complex program, it uses command line arguments and/or configuration YML files to decide
-what to do. The Cornerstone has to be built with it's [base configuration file](src/main/resources/config.yml) to define
+what to do. Cornerstone has to be built with it's [base configuration file](src/main/resources/config.yml) to define
 some base options.
 
 Two possible ways to re-define options are:
@@ -56,7 +59,7 @@ the precompiled header.
 
 Additional options (only available from CLI):
 * `--help` Prints help message and lists all available commands
-* `--credits` Outputs the creators of the Cornerstone
+* `--credits` Outputs the creators of Cornerstone
 
 Limitations
 ===========
@@ -73,7 +76,7 @@ note that you **can** use `bytes` (which is actually a container type) for map's
 Debugging
 =========
 
-Since the Cornerstone is an open source software, you may want to debug it or add some extra functionality.
+Since Cornerstone is an open source software, you may want to debug it or add some extra functionality.
 Since it is distributed as Maven project, you can import it as a Maven solution for Eclipse, Intellij IDEA or any of
 your favorite Java IDE.
 
