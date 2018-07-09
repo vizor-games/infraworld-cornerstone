@@ -403,7 +403,7 @@ public class CppType implements CtLeaf
     }
 
     @Override
-    public int hashCode()
+    public final int hashCode()
     {
         if (hash == 0)
         {
@@ -430,11 +430,25 @@ public class CppType implements CtLeaf
     }
 
     @Override
-    public boolean equals(final Object o)
+    public final boolean equals(final Object o)
     {
         if (this == o)
             return true;
 
-        return (o instanceof CppType) && (hashCode() == o.hashCode());
+        if (o instanceof CppType)
+        {
+            final CppType otherType = (CppType) o;
+
+            return  (isConstant == otherType.isConstant) &&
+                    (isVolatile == otherType.isVolatile) &&
+                    kind.equals(otherType.kind) &&
+                    name.equals(otherType.name) &&
+                    namespaces.equals(otherType.namespaces) &&
+                    nativeClass.equals(otherType.nativeClass) &&
+                    passage.equals(otherType.passage) &&
+                    (!isGeneric() || Objects.equals(getFlatGenericArguments(), otherType.getFlatGenericArguments()));
+        }
+
+        return false;
     }
 }
