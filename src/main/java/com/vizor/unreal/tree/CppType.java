@@ -441,11 +441,11 @@ public class CppType implements CtLeaf
 
             return  (isConstant == otherType.isConstant) &&
                     (isVolatile == otherType.isVolatile) &&
-                    kind.equals(otherType.kind) &&
-                    name.equals(otherType.name) &&
-                    namespaces.equals(otherType.namespaces) &&
-                    nativeClass.equals(otherType.nativeClass) &&
-                    passage.equals(otherType.passage) &&
+                    Objects.equals(kind, otherType.kind) &&
+                    Objects.equals(name, otherType.name) &&
+                    Objects.equals(namespaces, otherType.namespaces) &&
+                    Objects.equals(nativeClass, otherType.nativeClass) &&
+                    Objects.equals(passage, otherType.passage) &&
                     (!isGeneric() || Objects.equals(getFlatGenericArguments(), otherType.getFlatGenericArguments()));
         }
 
