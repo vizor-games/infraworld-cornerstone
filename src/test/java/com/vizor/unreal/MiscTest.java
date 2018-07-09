@@ -17,7 +17,6 @@ package com.vizor.unreal;
 
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,9 +29,10 @@ import static com.vizor.unreal.util.Misc.lineWiseUnindent;
 import static com.vizor.unreal.util.Misc.removeWhitespaces;
 import static com.vizor.unreal.util.Misc.reorder;
 import static com.vizor.unreal.util.Misc.rotateMap;
+import static com.vizor.unreal.util.Misc.spaceSeparatedToCamelCase;
 import static com.vizor.unreal.util.Misc.splitGeneric;
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
-import static com.vizor.unreal.util.Misc.toCamelCase;
+import static com.vizor.unreal.util.Misc.snakeCaseToCamelCase;
 import static java.lang.Integer.valueOf;
 import static java.lang.Math.abs;
 import static java.lang.String.join;
@@ -179,36 +179,69 @@ public class MiscTest
     }
 
     @Test
-    public void testToCamelCase()
+    public void testSnakeCaseToCamelCase()
     {
         // Digits
-        assertEquals(toCamelCase("42"), "42");
-        assertEquals(toCamelCase("_42__"), "42");
-        assertEquals(toCamelCase("42_23"), "4223");
+        assertEquals(snakeCaseToCamelCase("42"), "42");
+        assertEquals(snakeCaseToCamelCase("_42__"), "42");
+        assertEquals(snakeCaseToCamelCase("42_23"), "4223");
 
         // One word
-        assertEquals(toCamelCase("hello"), "Hello");
-        assertEquals(toCamelCase("Hello"), "Hello");
-        assertEquals(toCamelCase("HELLO"), "Hello");
+        assertEquals(snakeCaseToCamelCase("hello"), "Hello");
+        assertEquals(snakeCaseToCamelCase("Hello"), "Hello");
+        assertEquals(snakeCaseToCamelCase("HELLO"), "Hello");
 
-        assertEquals(toCamelCase("__hello"), "Hello");
-        assertEquals(toCamelCase("hello__"), "Hello");
-        assertEquals(toCamelCase("_hello_"), "Hello");
+        assertEquals(snakeCaseToCamelCase("__hello"), "Hello");
+        assertEquals(snakeCaseToCamelCase("hello__"), "Hello");
+        assertEquals(snakeCaseToCamelCase("_hello_"), "Hello");
 
         // Two words
-        assertEquals(toCamelCase("hello_world"), "HelloWorld");
-        assertEquals(toCamelCase("HELLO_WORLD"), "HelloWorld");
-        assertEquals(toCamelCase("Hello_World"), "HelloWorld");
-        assertEquals(toCamelCase("heLLo_woRLd"), "HelloWorld");
+        assertEquals(snakeCaseToCamelCase("hello_world"), "HelloWorld");
+        assertEquals(snakeCaseToCamelCase("HELLO_WORLD"), "HelloWorld");
+        assertEquals(snakeCaseToCamelCase("Hello_World"), "HelloWorld");
+        assertEquals(snakeCaseToCamelCase("heLLo_woRLd"), "HelloWorld");
 
-        assertEquals(toCamelCase("__hello__world"), "HelloWorld");
-        assertEquals(toCamelCase("Hello__World__"), "HelloWorld");
-        assertEquals(toCamelCase("_heLLo__woRLd_"), "HelloWorld");
+        assertEquals(snakeCaseToCamelCase("__hello__world"), "HelloWorld");
+        assertEquals(snakeCaseToCamelCase("Hello__World__"), "HelloWorld");
+        assertEquals(snakeCaseToCamelCase("_heLLo__woRLd_"), "HelloWorld");
 
         // Two words (with digits)
-        assertEquals(toCamelCase("42_hello_world"), "42HelloWorld");
-        assertEquals(toCamelCase("hello_42_world"), "Hello42World");
-        assertEquals(toCamelCase("hello_world_42"), "HelloWorld42");
+        assertEquals(snakeCaseToCamelCase("42_hello_world"), "42HelloWorld");
+        assertEquals(snakeCaseToCamelCase("hello_42_world"), "Hello42World");
+        assertEquals(snakeCaseToCamelCase("hello_world_42"), "HelloWorld42");
+    }
+
+    @Test
+    public void testSpaceSeparatedToCamelCase()
+    {
+        // Digits
+        assertEquals(spaceSeparatedToCamelCase("42"), "42");
+        assertEquals(spaceSeparatedToCamelCase(" 42  "), "42");
+        assertEquals(spaceSeparatedToCamelCase("42 23"), "4223");
+
+        // One word
+        assertEquals(spaceSeparatedToCamelCase("hello"), "Hello");
+        assertEquals(spaceSeparatedToCamelCase("Hello"), "Hello");
+        assertEquals(spaceSeparatedToCamelCase("HELLO"), "Hello");
+
+        assertEquals(spaceSeparatedToCamelCase("  hello"), "Hello");
+        assertEquals(spaceSeparatedToCamelCase("hello  "), "Hello");
+        assertEquals(spaceSeparatedToCamelCase(" hello "), "Hello");
+
+        // Two words
+        assertEquals(spaceSeparatedToCamelCase("hello world"), "HelloWorld");
+        assertEquals(spaceSeparatedToCamelCase("HELLO WORLD"), "HelloWorld");
+        assertEquals(spaceSeparatedToCamelCase("Hello World"), "HelloWorld");
+        assertEquals(spaceSeparatedToCamelCase("heLLo woRLd"), "HelloWorld");
+
+        assertEquals(spaceSeparatedToCamelCase("  hello  world"), "HelloWorld");
+        assertEquals(spaceSeparatedToCamelCase("Hello  World  "), "HelloWorld");
+        assertEquals(spaceSeparatedToCamelCase(" heLLo  woRLd "), "HelloWorld");
+
+        // Two words (with digits)
+        assertEquals(spaceSeparatedToCamelCase("42 hello world"), "42HelloWorld");
+        assertEquals(spaceSeparatedToCamelCase("hello 42 world"), "Hello42World");
+        assertEquals(spaceSeparatedToCamelCase("hello world 42"), "HelloWorld42");
     }
 
     @Test

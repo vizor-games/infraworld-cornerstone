@@ -183,21 +183,20 @@ public class Misc
         }
 
         // Remove all whitespaces
-        String name = stream(sb.toString().split("\\s+"))
-                .filter(s -> !s.isEmpty())
-                .map(s -> toUpperCase(s.charAt(0)) + s.toLowerCase().substring(1))
-                .collect(joining());
+        final String name = spaceSeparatedToCamelCase(sb.toString());
 
-        final char firstChar = sb.charAt(0);
-
-        // 1. If this is boolean - add 'b' prefix
-        // 2. If first char is digit or any symbol, restricted in cpp - should add a leading underscore
         if (isBoolean)
-            name = 'b' + name;
-        else if (isDigit(firstChar) || !isJavaIdentifierPart(firstChar))
-            name = name + '_';
+        {
+            // If this is boolean - add 'b' prefix
+            return 'b' + name;
+        }
+        else
+        {
+            final char firstChar = sb.charAt(0);
 
-        return name;
+            // If first char is digit or any symbol, restricted in cpp - should add a leading underscore
+            return (isDigit(firstChar) || !isJavaIdentifierPart(firstChar)) ? ('_' + name) : name;
+        }
     }
 
     /**
@@ -272,11 +271,32 @@ public class Misc
         return result;
     }
 
-    public static String toCamelCase(final String snakeStr)
+    public static String snakeCaseToCamelCase(final String snakeCaseString)
     {
-        final StringBuilder sb = new StringBuilder(snakeStr.length());
+        final StringBuilder sb = new StringBuilder(snakeCaseString.length());
 
-        for (final String s : snakeStr.split("_"))
+        for (final String s : snakeCaseString.split("_"))
+        {
+            final int wordLength = s.length();
+
+            if (wordLength > 0)
+            {
+                sb.append(toUpperCase(s.charAt(0)));
+
+                if (wordLength > 1)
+                    sb.append(s.substring(1).toLowerCase());
+            }
+        }
+
+        return sb.toString();
+    }
+
+    public static String spaceSeparatedToCamelCase(final String spaceSeparatedString)
+    {
+        final StringBuilder sb = new StringBuilder(spaceSeparatedString.length());
+
+        // No need to use a slower regex (such as '\\s+'), cause empty words will be wiped out anyway.
+        for (final String s : spaceSeparatedString.split(" "))
         {
             final int wordLength = s.length();
 

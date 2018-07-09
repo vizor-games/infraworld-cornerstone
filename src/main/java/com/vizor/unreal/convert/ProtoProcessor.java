@@ -59,7 +59,7 @@ import static com.vizor.unreal.tree.CppType.Kind.Struct;
 import static com.vizor.unreal.tree.CppType.plain;
 import static com.vizor.unreal.util.Misc.reorder;
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
-import static com.vizor.unreal.util.Misc.toCamelCase;
+import static com.vizor.unreal.util.Misc.snakeCaseToCamelCase;
 import static com.vizor.unreal.util.Tuple.of;
 import static java.io.File.separator;
 import static java.lang.String.join;
@@ -102,7 +102,7 @@ class ProtoProcessor implements Runnable
 
         this.wrapperName = removeExtension(pathToProto.toFile().getName());
 
-        this.className = toCamelCase(wrapperName);
+        this.className = snakeCaseToCamelCase(wrapperName);
         this.packageNamespace = new CppNamespace(parse.packageName());
     }
 
