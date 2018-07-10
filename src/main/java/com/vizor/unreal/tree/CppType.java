@@ -74,10 +74,25 @@ public class CppType implements CtLeaf
         Enum,
         Wildcard;
 
-        public final String getCppName()
+        /**
+         * Retrieves a C++ kind name, useful for imports or friend declarations.
+         * Class -> 'class';
+         * Enum -> 'enum';
+         * Struct -> 'struct';
+         * Primitive -> '' because primitives has no kind.
+         * @return Name of the C++ kind for given instance.
+         */
+        public final String getCppKindName()
         {
-            final boolean complex = (this == Kind.Class || this == Kind.Struct || this == Kind.Enum);
-            return complex ? name().toLowerCase() : "";
+            switch (this)
+            {
+                case Class:
+                case Struct:
+                case Enum:
+                    return name().toLowerCase();
+                default:
+                    return "";
+            }
         }
     }
 

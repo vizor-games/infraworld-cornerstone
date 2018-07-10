@@ -48,6 +48,20 @@ class CastGenerator
 
     private static final Logger log = LogManager.getLogger(CastGenerator.class);
 
+    public enum CastMethod
+    {
+        PtrArrayCast,
+        ArrayCast,
+        MapCast,
+        EnumCast,
+        Cast;
+
+        public final String getMethodName()
+        {
+            return "Proto_" + name();
+        }
+    }
+
     /**
      * Generates casts from CPP to UE and backwards.
      *
@@ -114,7 +128,8 @@ class CastGenerator
 
         body.append("return ").append(outputItemName).append(';');
 
-        final CppFunction castFunction = new CppFunction(getCastMethodName(inType), outType,
+        final CastMethod castMethod = getCastMethod(inType);
+        final CppFunction castFunction = new CppFunction(castMethod.getMethodName(), outType,
                 singletonList(new CppArgument(inType.makeRef(), inputItemName)), emptyList());
 
         castFunction.setBody(body.toString());
@@ -130,8 +145,7 @@ class CastGenerator
         final CppType outType = outField.getType();
 
         final List<CppType> params = outType.getGenericParams();
-
-        final String castMethodName = getCastMethodName(inType);
+        final CastMethod castMethod = getCastMethod(inType);
 
         if (inType.isMap())
         {
@@ -141,7 +155,7 @@ class CastGenerator
                         " type, the number of args should be 2, not: " + params.size());
             }
 
-            final String castPattern =  outputItemName + ".{0} = " + castMethodName + "<{1}>(Item.{2}());";
+            final String castPattern =  outputItemName + ".{0} = " + castMethod.getMethodName() + "<{1}>(Item.{2}());";
             return format(castPattern, outField.getName(), params.stream().map(CppType::toString).collect(joining(", ")),
                     inField.getName());
         }
@@ -150,7 +164,7 @@ class CastGenerator
             final String castedTypename = outType.isArray() ?
                     params.stream().map(CppType::toString).collect(joining(", ")) : outType.toString();
 
-            final String pattern = outputItemName + ".{0} = " + castMethodName + "<{1}>(" + inputItemName + ".{2}());";
+            final String pattern = outputItemName + ".{0} = " + castMethod.getMethodName() + "<{1}>(" + inputItemName + ".{2}());";
 
             return format(pattern, outField.getName(), castedTypename, inField.getName());
         }
@@ -164,6 +178,7 @@ class CastGenerator
         final List<CppType> params = outType.getGenericParams();
         final String paramsArgs = params.stream().map(CppType::toString).collect(joining(", "));
 
+        final CastMethod castMethod = getCastMethod(inType);
         final String completeCast;
 
         if (inType.isMap())
@@ -180,7 +195,7 @@ class CastGenerator
             final StringBuilder sb = new StringBuilder();
 
             sb.append("const ").append(outType.toString()).append("& ").append(declarationName).append(" = ");
-            sb.append(getCastMethodName(inType)).append('<').append(paramsArgs).append('>');
+            sb.append(castMethod.getMethodName()).append('<').append(paramsArgs).append('>');
             sb.append('(').append(inputItemName).append('.').append(inField.getName()).append(");");
             sb.append(lineSeparator());
 
@@ -191,7 +206,7 @@ class CastGenerator
         }
         else if (inType.isArray())
         {
-            final String pattern = outputItemName + ".mutable_{0}()->CopyFrom(" + getCastMethodName(inType) + "<{1}>(" + inputItemName + ".{2}));";
+            final String pattern = outputItemName + ".mutable_{0}()->CopyFrom(" + castMethod.getMethodName() + "<{1}>(" + inputItemName + ".{2}));";
             completeCast =  format(pattern, outField.getName(), paramsArgs, inField.getName());
         }
         else
@@ -206,7 +221,7 @@ class CastGenerator
                 final String declarationName = "CastedStruct_" + outField.getName();
 
                 sb.append(outType.toString()).append(" ").append(declarationName).append(" = ");
-                sb.append(getCastMethodName(inType)).append('<').append(outType.toString()).append('>');
+                sb.append(castMethod.getMethodName()).append('<').append(outType.toString()).append('>');
                 sb.append('(').append(inputItemName).append('.').append(inField.getName()).append(");");
                 sb.append(lineSeparator());
 
@@ -218,7 +233,7 @@ class CastGenerator
             }
             else
             {
-                final String pattern = outputItemName + ".set_{0}(" + getCastMethodName(inType) + "<{1}>(" + inputItemName + ".{2}));";
+                final String pattern = outputItemName + ".set_{0}(" + castMethod.getMethodName() + "<{1}>(" + inputItemName + ".{2}));";
                 completeCast =  format(pattern, outField.getName(), outType.toString(), inField.getName());
             }
         }
@@ -227,29 +242,29 @@ class CastGenerator
         return completeCast;
     }
 
-    private String getCastMethodName(CppType t)
+    private CastMethod getCastMethod(CppType typeToCast)
     {
-        if (t.isArray())
+        if (typeToCast.isArray())
         {
-            final CppType arrayGenericType = t.getGenericParams().get(0);
+            final CppType arrayGenericType = typeToCast.getGenericParams().get(0);
 
             if (arrayGenericType.isKindOf(Struct))
-                return "Proto_PtrArrayCast";
+                return CastMethod.PtrArrayCast;
             else
-                return "Proto_ArrayCast";
+                return CastMethod.ArrayCast;
 
         }
-        else if (t.isMap())
+        else if (typeToCast.isMap())
         {
-            return "Proto_MapCast";
+            return CastMethod.MapCast;
         }
-        else if (t.isKindOf(Enum))
+        else if (typeToCast.isKindOf(Enum))
         {
-            return "Proto_EnumCast";
+            return CastMethod.EnumCast;
         }
         else
         {
-            return "Proto_Cast";
+            return CastMethod.Cast;
         }
     }
 }

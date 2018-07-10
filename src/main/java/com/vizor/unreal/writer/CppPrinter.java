@@ -257,7 +257,7 @@ public class CppPrinter implements AutoCloseable
         final List<CppType> friendTypes = struct.getFriendDeclarations();
         if (!friendTypes.isEmpty())
         {
-            friendTypes.forEach(f -> write("friend ").write(f.getKind().getCppName()).writeLine(";"));
+            friendTypes.forEach(f -> write("friend ").write(f.getKind().getCppKindName()).writeLine(";"));
             newLine();
         }
 
