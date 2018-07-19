@@ -17,14 +17,18 @@ package com.vizor.unreal.preprocess;
 
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 
+/**
+ * Using preprocessor is a short and easy way to define operations, which had to be performed over
+ * retrieved instances of {@link com.squareup.wire.schema.internal.parser.ProtoFileElement}
+ *
+ * NOTE: Since preprocessors are being instantiated with reflection, they needs a public default
+ * constructor. Please consider not to execute any non-trivial logic within the constructor.
+ */
 public interface Preprocessor
 {
     /**
      * Processes a {@link com.squareup.wire.schema.internal.parser.ProtoFileElement} a custom way to modify it's
-     * internal structure. Should return a list of ProtoFileElement got after processing.
-     *
-     * Note that you may return a set of {@link com.squareup.wire.schema.internal.parser.ProtoFileElement}, not a
-     * single element.
+     * internal structure. Should return a modified (or the same) ProtoFileElement.
      *
      * @param e A ProtoFileElement to be processed.
      * @return A list of ProtoFileElement, got after processing.

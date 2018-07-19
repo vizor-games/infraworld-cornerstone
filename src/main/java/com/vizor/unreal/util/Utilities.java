@@ -44,7 +44,7 @@ public final class Utilities
         try {
             return doFindFilesRecursively(src, dst, extension);
         }
-        catch (Throwable e) {
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

@@ -23,20 +23,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static com.vizor.unreal.util.Misc.enumToString;
-import static com.vizor.unreal.util.Misc.lineWiseIndent;
-import static com.vizor.unreal.util.Misc.lineWiseUnindent;
 import static com.vizor.unreal.util.Misc.removeWhitespaces;
 import static com.vizor.unreal.util.Misc.reorder;
 import static com.vizor.unreal.util.Misc.rotateMap;
+import static com.vizor.unreal.util.Misc.snakeCaseToCamelCase;
 import static com.vizor.unreal.util.Misc.spaceSeparatedToCamelCase;
 import static com.vizor.unreal.util.Misc.splitGeneric;
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
-import static com.vizor.unreal.util.Misc.snakeCaseToCamelCase;
 import static java.lang.Integer.valueOf;
-import static java.lang.Math.abs;
 import static java.lang.String.join;
-import static java.lang.System.lineSeparator;
 import static java.util.Arrays.asList;
 import static java.util.Collections.shuffle;
 import static org.junit.Assert.assertEquals;
@@ -45,53 +40,6 @@ import static org.junit.Assert.assertTrue;
 
 public class MiscTest
 {
-    @SuppressWarnings("unused")
-    private enum TestEnum
-    {
-        A,
-        Bb,
-        Ccc,
-        Dddd,
-        Eeeee,
-        Ffffff,
-    }
-
-    @Test
-    public void testEnumToString()
-    {
-        assertEquals(enumToString(TestEnum.class), "A, Bb, Ccc, Dddd, Eeeee, Ffffff");
-    }
-
-    @Test
-    public void testIndentUnindent()
-    {
-        // Number of attemps
-        final int numAttempts = 100;
-
-        final String src = join(lineSeparator(), asList(
-            "Hello",
-            "World"
-        ));
-
-        final Random random = new Random();
-
-        // Since src wasn't indented, unindenting it will cause no effect
-        random.ints().limit(numAttempts).forEach(randInt -> {
-            assertEquals(src, lineWiseUnindent(src, abs(randInt)));
-        });
-
-        // Indent and then unindent, then compare to the source
-        for (int i = 0; i < numAttempts; i++)
-        {
-            final int numTabs = random.nextInt(1000);
-
-            final String indented = lineWiseIndent(src, numTabs);
-            final String unindented = lineWiseUnindent(indented, numTabs);
-
-            assertEquals(src, unindented);
-        }
-    }
-
     @Test
     public void testSplitGeneric()
     {

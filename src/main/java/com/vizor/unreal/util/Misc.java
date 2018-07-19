@@ -41,90 +41,54 @@ public class Misc
 {
     public static final String TAB = "    ";
 
-    public static <T extends Enum<T>> String enumToString(final Class<T> aEnum)
-    {
-        return stream(aEnum.getEnumConstants())
-                .sorted(comparingInt(Enum::ordinal))
-                .map(Enum::name)
-                .collect(joining(", "));
-    }
-
-    public static String lineWiseIndent(String str, int numTabs)
-    {
-        if (numTabs < 0)
-            throw new IllegalArgumentException("numTabs should be >= 0, got " + numTabs);
-
-        // Nothing to do -> quit
-        if (numTabs == 0)
-            return str;
-
-        final String tabs = join("", nCopies(numTabs, TAB));
-        final StringBuilder sb = new StringBuilder();
-
-        final String[] split = str.split(lineSeparator());
-        for (final String s : split)
-            sb.append(tabs).append(s).append(lineSeparator());
-
-        if (split.length > 0)
-        {
-            // On Windows systems length of System.lineSeparator() is 2 (\r\n)
-            for (int i = 0; i < lineSeparator().length(); i++) {
-                sb.deleteCharAt(sb.length() - 1);
-            }
-        }
-
-        return sb.toString();
-    }
-
-    public static String lineWiseUnindent(String str, int numTabs)
-    {
-        if (numTabs < 0)
-            throw new IllegalArgumentException("numTabs should be >= 0, got " + numTabs);
-
-        // Nothing to do -> quit
-        if (numTabs == 0)
-            return str;
-
-        final int charsToRemove = TAB.length() * numTabs;
-        final StringBuilder sb = new StringBuilder();
-
-        final String[] split = str.split(lineSeparator());
-        for (final String s : split)
-        {
-            int limit = 0;
-
-            // Remove actual required of max available number of whitespaces
-            final int charsToTraverse = min(charsToRemove, str.length());
-            while ((limit < charsToTraverse) && isWhitespace(s.charAt(limit)))
-                limit++;
-
-            sb.append(s, limit, s.length()).append(lineSeparator());
-        }
-
-        if (split.length > 0)
-        {
-            // On Windows systems length of System.lineSeparator() is 2 (\r\n)
-            for (int i = 0; i < lineSeparator().length(); i++) {
-                sb.deleteCharAt(sb.length() - 1);
-            }
-        }
-
-        return sb.toString();
-    }
-
+    /**
+     * Returns an input string without whitespaces.
+     *
+     * @param str A string to remove whitespaces from.
+     * @return String without whitespaces. Might be the same instance if the input strings contained no whitespaces.
+     */
     public static String removeWhitespaces(final String str)
     {
+        // Very fast
+        if (str.isEmpty())
+            return str;
+
         final int length = str.length();
 
-        final StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++)
-        {
-            final char c = str.charAt(i);
-            if (!isWhitespace(c))
-                sb.append(c);
-        }
+        // Count whitespaces
+        int numWhitespaces = 0;
 
-        return sb.toString();
+        for (int i = 0; i < length; i++)
+            numWhitespaces += isWhitespace(str.charAt(i)) ? 1 : 0;
+
+        if (numWhitespaces > 0)
+        {
+            final int numCharactersRequired = length - numWhitespaces;
+
+            if (numCharactersRequired > 0)
+            {
+                // 'slow path' - allocate a builder, then preserve all non-whitespace characters
+                final StringBuilder sb = new StringBuilder(numCharactersRequired);
+                for (int i = 0; i < length; i++)
+                {
+                    final char c = str.charAt(i);
+                    if (!isWhitespace(c))
+                        sb.append(c);
+                }
+
+                return sb.toString();
+            }
+            else
+            {
+                // string contained nothing but whitespaces - can return a pre-allocated instance of empty string.
+                return "";
+            }
+        }
+        else
+        {
+            // 'fase path' - source string contained no whitespaces, no need to allocate an additional string.
+            return str;
+        }
     }
 
     /**
