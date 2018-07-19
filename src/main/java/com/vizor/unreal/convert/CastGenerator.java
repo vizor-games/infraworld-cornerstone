@@ -56,9 +56,16 @@ class CastGenerator
         EnumCast,
         Cast;
 
+        private final String castMethodName;
+
+        CastMethod()
+        {
+            castMethodName = "Proto_" + name();
+        }
+
         public final String getMethodName()
         {
-            return "Proto_" + name();
+            return castMethodName;
         }
     }
 
@@ -225,9 +232,16 @@ class CastGenerator
                 sb.append('(').append(inputItemName).append('.').append(inField.getName()).append(");");
                 sb.append(lineSeparator());
 
+                if (generateCastComments)
+                {
+                    sb.append("// ! Need to instantiate a new ").append(outType.toString())
+                            .append(" to be possessed by the outer item");
+                    sb.append(lineSeparator());
+                }
+
                 // Assign a temp variable to the field via 'set_allocated_...()'
                 sb.append(outputItemName).append(".set_allocated_").append(outField.getName());
-                sb.append("(&").append(declarationName).append(");");
+                sb.append("(new ").append(outType.toString()).append('(').append(declarationName).append("));");
 
                 completeCast =  sb.toString();
             }
