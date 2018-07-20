@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static java.lang.Character.isDigit;
 import static java.lang.Character.isJavaIdentifierPart;
@@ -283,7 +283,7 @@ public class Misc
 
     public static List<Tuple<Path, Path>> findFilesRecursively(final Path src, final Path dst, final String extension)
     {
-        final Function<String, Boolean> endsWithIgnoreCase = str -> {
+        final Predicate<String> endsWithIgnoreCase = str -> {
             final int sufLen = extension.length();
             return str.regionMatches(true, str.length() - sufLen, extension, 0, sufLen);
         };
@@ -291,7 +291,7 @@ public class Misc
         try {
             return walk(src)
                 .filter(Files::isRegularFile)
-                .filter(p -> endsWithIgnoreCase.apply(p.toString()))
+                .filter(p -> endsWithIgnoreCase.test(p.toString()))
                 .map(p -> Tuple.of(p, get(dst.toString(), src.relativize(p.getParent()).toString())))
                 .collect(toList());
         }
