@@ -19,7 +19,6 @@ import com.vizor.unreal.config.Config;
 import com.vizor.unreal.convert.Converter;
 import com.vizor.unreal.util.CliHandler;
 import com.vizor.unreal.util.CliHandler.Parse;
-import com.vizor.unreal.util.Misc;
 import com.vizor.unreal.util.Tuple;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
@@ -27,8 +26,8 @@ import org.apache.logging.log4j.Logger;
 import java.nio.file.Path;
 import java.util.List;
 
+import static com.vizor.unreal.util.Misc.findFilesRecursively;
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
-import static com.vizor.unreal.util.Utilities.findFilesRecursively;
 import static java.lang.Math.round;
 import static java.lang.Runtime.getRuntime;
 import static java.lang.System.nanoTime;

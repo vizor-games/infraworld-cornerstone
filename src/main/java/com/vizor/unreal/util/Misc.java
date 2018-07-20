@@ -15,10 +15,14 @@
  */
 package com.vizor.unreal.util;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static java.lang.Character.isDigit;
 import static java.lang.Character.isJavaIdentifierPart;
@@ -26,14 +30,10 @@ import static java.lang.Character.isLowerCase;
 import static java.lang.Character.isUpperCase;
 import static java.lang.Character.isWhitespace;
 import static java.lang.Character.toUpperCase;
-import static java.lang.Math.min;
-import static java.lang.String.join;
-import static java.lang.System.lineSeparator;
+import static java.nio.file.Files.walk;
+import static java.nio.file.Paths.get;
 import static java.util.Arrays.stream;
-import static java.util.Collections.nCopies;
-import static java.util.Comparator.comparingInt;
 import static java.util.Objects.isNull;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 @SuppressWarnings("unused")
@@ -279,5 +279,24 @@ public class Misc
     public static boolean stringIsNullOrEmpty(final String string)
     {
         return isNull(string) || string.isEmpty();
+    }
+
+    public static List<Tuple<Path, Path>> findFilesRecursively(final Path src, final Path dst, final String extension)
+    {
+        final Function<String, Boolean> endsWithIgnoreCase = str -> {
+            final int sufLen = extension.length();
+            return str.regionMatches(true, str.length() - sufLen, extension, 0, sufLen);
+        };
+
+        try {
+            return walk(src)
+                .filter(Files::isRegularFile)
+                .filter(p -> endsWithIgnoreCase.apply(p.toString()))
+                .map(p -> Tuple.of(p, get(dst.toString(), src.relativize(p.getParent()).toString())))
+                .collect(toList());
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
