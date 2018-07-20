@@ -18,6 +18,8 @@ package com.vizor.unreal.tree.preprocessor;
 import com.vizor.unreal.tree.CppRecord;
 import com.vizor.unreal.writer.CppPrinter;
 
+import java.util.Objects;
+
 public class CppPragma extends CppRecord
 {
     private final String body;
@@ -34,8 +36,6 @@ public class CppPragma extends CppRecord
 
         this.body = body;
         this.comment = comment;
-
-//        setResidence(Residence.Cpp);
     }
 
     public String getBody()
@@ -56,8 +56,29 @@ public class CppPragma extends CppRecord
     }
 
     @Override
+    public int hashCode()
+    {
+        return Objects.hash(body, comment);
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj == this)
+            return true;
+
+        if (obj instanceof CppPragma)
+        {
+            final CppPragma other = (CppPragma) obj;
+            return Objects.equals(body, other.body) && Objects.equals(comment, other.comment);
+        }
+
+        return false;
+    }
+
+    @Override
     public String toString ()
     {
-        return body + " //" + comment;
+        return "#pragma" + body + " //" + comment;
     }
 }

@@ -18,6 +18,9 @@ package com.vizor.unreal.tree.preprocessor;
 import com.vizor.unreal.tree.CppRecord;
 import com.vizor.unreal.writer.CppPrinter;
 
+import java.text.MessageFormat;
+import java.util.Objects;
+
 public final class CppInclude extends CppRecord
 {
     private final boolean isGlobal;
@@ -54,6 +57,13 @@ public final class CppInclude extends CppRecord
     }
 
     @Override
+    public final CppPrinter accept(CppPrinter printer)
+    {
+        printer.visit(this);
+        return printer;
+    }
+
+    @Override
     public void enableAnnotations(boolean enable)
     {
         if (enable)
@@ -63,9 +73,29 @@ public final class CppInclude extends CppRecord
     }
 
     @Override
-    public final CppPrinter accept(CppPrinter printer)
+    public int hashCode()
     {
-        printer.visit(this);
-        return printer;
+        return Objects.hash(isGlobal, include);
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj == this)
+            return true;
+
+        if (obj instanceof CppInclude)
+        {
+            final CppInclude other = (CppInclude) obj;
+            return (isGlobal == other.isGlobal) && Objects.equals(include, other.include);
+        }
+
+        return false;
+    }
+
+    @Override
+    public String toString()
+    {
+        return MessageFormat.format(getFormatter(), include);
     }
 }

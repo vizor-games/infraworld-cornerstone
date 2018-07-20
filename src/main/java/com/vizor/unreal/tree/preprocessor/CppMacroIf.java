@@ -20,10 +20,15 @@ import com.vizor.unreal.writer.CppPrinter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 
+import static com.vizor.unreal.util.Misc.TAB;
+import static java.lang.System.lineSeparator;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
+import static java.util.stream.Collectors.joining;
 
 public class CppMacroIf extends CppRecord implements PreprocessorStatement
 {
@@ -52,6 +57,27 @@ public class CppMacroIf extends CppRecord implements PreprocessorStatement
         {
             return false;
         }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(condition, records);
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj == this)
+                return true;
+
+            if (obj instanceof Branch)
+            {
+                final Branch other = (Branch) obj;
+                return Objects.equals(condition, other.condition) && Objects.equals(records, other.records);
+            }
+
+            return false;
+        }
     }
 
     private static Branch DUMMY_BRANCH = new Branch("NO_CONDITION", emptyList()) {
@@ -63,9 +89,8 @@ public class CppMacroIf extends CppRecord implements PreprocessorStatement
     };
 
     private final Branch ifBranch;
-    private Branch elseBranch = DUMMY_BRANCH;
-
     private List<Branch> elifBranches = new ArrayList<>(0);
+    private Branch elseBranch = DUMMY_BRANCH;
 
     public CppMacroIf(final Residence residence, final String condition, final CppRecord... records)
     {
@@ -88,15 +113,9 @@ public class CppMacroIf extends CppRecord implements PreprocessorStatement
         return this;
     }
 
-
     public final Branch getIfBranch()
     {
         return ifBranch;
-    }
-
-    public final Branch getElseBranch()
-    {
-        return elseBranch;
     }
 
     public final List<Branch> getElifBranches()
@@ -104,10 +123,60 @@ public class CppMacroIf extends CppRecord implements PreprocessorStatement
         return unmodifiableList(elifBranches);
     }
 
+    public final Branch getElseBranch()
+    {
+        return elseBranch;
+    }
+
     @Override
     public CppPrinter accept(CppPrinter printer)
     {
         printer.visit(this);
         return printer;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(ifBranch, elifBranches, elseBranch);
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj == this)
+            return true;
+
+        if (obj instanceof CppMacroIf)
+        {
+            final CppMacroIf other = (CppMacroIf) obj;
+
+            return Objects.equals(ifBranch, other.ifBranch)
+                && Objects.equals(elifBranches, other.elifBranches)
+                && Objects.equals(elseBranch, other.elseBranch);
+        }
+
+        return false;
+    }
+
+    @Override
+    public String toString()
+    {
+        final StringBuilder sb = new StringBuilder();
+
+        final Function<List<?>, String> squasher = rs -> rs.stream().map(r -> TAB + r).collect(joining(lineSeparator()));
+
+        sb.append("#if ").append(ifBranch.condition).append(lineSeparator());
+        sb.append(squasher.apply(ifBranch.records));
+
+        elifBranches.forEach(elseIfBranch -> {
+            sb.append("#elif ").append(elseIfBranch.condition).append(lineSeparator());
+            sb.append(squasher.apply(elseIfBranch.records));
+        });
+
+        sb.append("#else").append(lineSeparator());
+        sb.append(squasher.apply(elseBranch.records));
+
+        return sb.toString();
     }
 }
