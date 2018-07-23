@@ -77,11 +77,15 @@ public final class CliHandler
             if (cmd.hasOption(creditsOption.getOpt()))
             {
                 printHelp(options, String.join(lineSeparator(), asList(
-                    "******************** CREDITS ********************",
-                    "Raman  Chakhouski",
-                    "Nikita Miroshnichenko",
-                    "                      ...                        ",
-                    "*************************************************"
+                    "* CREDITS *",
+                    "",
+                    "Design:",
+                    " - Raman Chakhouski",
+                    "",
+                    "General programming:",
+                    " - Raman Chakhouski",
+                    " - Nikita Miroshnichenko",
+                    ""
                 )));
             }
         }
