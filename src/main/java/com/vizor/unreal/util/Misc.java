@@ -281,6 +281,32 @@ public class Misc
         return isNull(string) || string.isEmpty();
     }
 
+    /**
+     * Returns a string containing n number of tabs.
+     * @param n Number of tabs to insert, must not be negative.
+     * @return String containing n tabs.
+     */
+    public static String nTabs(int n)
+    {
+        switch (n)
+        {
+            case 0:
+                return "";
+            case 1:
+                return TAB;
+            default:
+                if (n < 0)
+                    throw new IllegalArgumentException("n mustn't be negative, got " + n + " instead");
+
+                final StringBuilder sb = new StringBuilder(TAB.length() * n);
+
+                for (int i = 0; i < n; i++)
+                    sb.append(TAB);
+
+                return sb.toString();
+        }
+    }
+
     public static List<Tuple<Path, Path>> findFilesRecursively(final Path src, final Path dst, final String extension)
     {
         final Predicate<String> endsWithIgnoreCase = str -> {

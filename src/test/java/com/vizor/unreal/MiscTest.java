@@ -15,6 +15,7 @@
  */
 package com.vizor.unreal;
 
+import com.vizor.unreal.util.Misc;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static com.vizor.unreal.util.Misc.TAB;
 import static com.vizor.unreal.util.Misc.removeWhitespaces;
 import static com.vizor.unreal.util.Misc.reorder;
 import static com.vizor.unreal.util.Misc.rotateMap;
@@ -204,5 +206,22 @@ public class MiscTest
         assertFalse(stringIsNullOrEmpty("null"));
         assertFalse(stringIsNullOrEmpty("0"));
         assertFalse(stringIsNullOrEmpty("zero"));
+    }
+
+    @Test
+    public void testNTabs()
+    {
+        for (int n = 0; n < 100; n++)
+        {
+            final String nTabs = Misc.nTabs(n);
+
+            assertEquals(nTabs.length(), TAB.length() * n);
+
+            final StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < n; i++)
+                sb.append(TAB);
+
+            assertEquals(nTabs, sb.toString());
+        }
     }
 }
