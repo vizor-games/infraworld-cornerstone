@@ -220,7 +220,6 @@ public final class Config
     {
         checkString(srcPath, "srcPath must not be null or empty");
         checkString(dstPath, "dstPath must not be null or empty");
-//        checkString(moduleName, "moduleName must not be null or empty");
 
         for (int i = 0; i < moduleName.length(); i++)
         {
@@ -234,11 +233,10 @@ public final class Config
 
         checkString(wrappersPath, "wrappers_path must not be null or empty");
         checkString(companyName, "company_name must not be null or empty");
-//        checkString(precompiledHeader, "precompiled_header must not be null or empty");
 
         for (int i = 0; i < companyName.length(); i++)
         {
-            if (0 == compare(companyName.charAt(i), '|'))
+            if (companyName.charAt(i) == '|')
                 throw new RuntimeException("company_name, which is '" + companyName + "' mustn't contain '|'");
         }
 
@@ -263,33 +261,38 @@ public final class Config
         final Field[] declaredFields = cliParseClass.getDeclaredFields();
         final Map<String, Field> cliFields = stream(declaredFields).collect(toMap(Field::getName, identity()));
 
-        for (final Field f : configClass.getDeclaredFields())
+        for (final Field configField : configClass.getDeclaredFields())
         {
             // Skip fields not annotated as json props
-            if (!f.isAnnotationPresent(JsonProperty.class))
+            if (!configField.isAnnotationPresent(JsonProperty.class))
                 continue;
 
-            final Field cliField = cliFields.get(f.getName());
+            final Field cliField = cliFields.get(configField.getName());
 
             // If field was found
             if (nonNull(cliField))
             {
-                f.setAccessible(true);
-                cliField.setAccessible(true);
+                final boolean configFieldWasAccessible = configField.isAccessible();
+                if (!configFieldWasAccessible)
+                    configField.setAccessible(true);
+
+                final boolean cliFieldWasAccessible = cliField.isAccessible();
+                if (!cliFieldWasAccessible)
+                    cliField.setAccessible(true);
 
                 try
                 {
                     final Object cliValue = cliField.get(cliParse);
-                    final Object configValue = f.get(Config.this);
+                    final Object configValue = configField.get(Config.this);
 
                     // Don't replace if replacement value is null or values are equal.
                     if (nonNull(cliValue) && !Objects.equals(cliValue, configValue))
                     {
                         log.info("Replacing '{}.{} = {}' with '{}.{} = {}'",
-                                configClass.getName(), f.getName(), valueOf(configValue),
+                                configClass.getName(), configField.getName(), valueOf(configValue),
                                 cliParseClass.getName(), cliField.getName(), valueOf(cliValue));
 
-                        f.set(this, cliValue);
+                        configField.set(this, cliValue);
                     }
                 }
                 catch (IllegalAccessException e)
@@ -297,12 +300,15 @@ public final class Config
                     throw new RuntimeException(e);
                 }
 
-                cliField.setAccessible(false);
-                f.setAccessible(false);
+                if (!configFieldWasAccessible)
+                    configField.setAccessible(false);
+
+                if (!cliFieldWasAccessible)
+                    cliField.setAccessible(false);
             }
             else
             {
-                log.debug("Field named '{}' wasn't found among {}", f.getName(),
+                log.debug("Field named '{}' wasn't found among {}", configField.getName(),
                         stream(declaredFields).map(df -> "'" + df.getName() + "'").collect(toList()));
             }
         }
