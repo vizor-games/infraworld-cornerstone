@@ -18,7 +18,7 @@ package com.vizor.unreal.config;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.vizor.unreal.util.CliHandler;
+import com.vizor.unreal.util.CliHandler.Parse;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 
@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
-import static java.io.File.separator;
-import static java.lang.Character.compare;
 import static java.lang.Character.isDigit;
 import static java.lang.Character.isLetter;
 import static java.lang.String.valueOf;
@@ -88,7 +86,7 @@ public final class Config
      *
      * @return Opened {@link InputStream to the config file}
      */
-    private static InputStream getYamlPath()
+    private static InputStream getConfigStream()
     {
         String pathToJar = Config.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 
@@ -133,7 +131,7 @@ public final class Config
         {
             final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
-            try (final InputStream is = getYamlPath())
+            try (final InputStream is = getConfigStream())
             {
                 config = mapper.readValue(is, Config.class);
             }
@@ -253,7 +251,7 @@ public final class Config
         }
     }
 
-    public final void patchWithCliOptions(final CliHandler.Parse cliParse)
+    public final void patchWithCliOptions(final Parse cliParse)
     {
         final Class<?> cliParseClass = cliParse.getClass();
         final Class<?> configClass = getClass();
