@@ -15,21 +15,27 @@
  */
 package com.vizor.unreal.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.vizor.unreal.util.CliHandler.Parse;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.introspector.Property;
+import org.yaml.snakeyaml.introspector.PropertyUtils;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.vizor.unreal.util.Misc.snakeCaseToCamelCase;
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
 import static java.lang.Character.isDigit;
 import static java.lang.Character.isLetter;
@@ -47,37 +53,37 @@ import static org.apache.logging.log4j.LogManager.getRootLogger;
 @SuppressWarnings("unused")
 public final class Config
 {
-    private static final Logger log = getLogger(Config.class);
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    private @interface ConfigField {}
 
+    private static final Logger log = getLogger(Config.class);
     private static final String configFileName = "config.yml";
 
     private static Config config = null;
 
-    @JsonProperty(value = "src_path", required = true)
+    @ConfigField
     private String srcPath;
 
-    @JsonProperty(value = "dst_path", required = true)
+    @ConfigField
     private String dstPath;
 
-    @JsonProperty(value = "module_name", required = true)
+    @ConfigField
     private String moduleName;
 
-    @JsonProperty(value = "precompiled_header", required = true)
+    @ConfigField
     private String precompiledHeader;
 
-    @JsonProperty("wrappers_path")
+    @ConfigField
     private String wrappersPath;
 
-    @JsonProperty("company_name")
+    @ConfigField
     private String companyName;
 
-    /**
-     * @see org.apache.logging.log4j.Level
-     */
-    @JsonProperty("log_level")
+    @ConfigField
     private String logLevel;
 
-    @JsonProperty(value = "no_fork", defaultValue = "false")
+    @ConfigField
     private boolean noFork;
 
 
@@ -210,16 +216,18 @@ public final class Config
     {
         if (isNull(config))
         {
-            final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            final Constructor constructor = new Constructor(Config.class);
+            constructor.setPropertyUtils(new PropertyUtils(){
+                @Override
+                public Property getProperty(Class<?> type, String name)
+                {
+                    return super.getProperty(type, snakeCaseToCamelCase(name, false));
+                }
+            });
 
-            try (final InputStream is = getConfigStream())
-            {
-                config = mapper.readValue(is, Config.class);
-            }
-            catch (Exception e)
-            {
-                throw new RuntimeException(e);
-            }
+            final Yaml yaml = new Yaml(constructor);
+
+            config = yaml.loadAs(getConfigStream(), Config.class);
         }
 
         return config;
@@ -228,15 +236,17 @@ public final class Config
     @Override
     public String toString()
     {
-        final ObjectMapper mapper = new ObjectMapper();
-        try
-        {
-            return mapper.writeValueAsString(this);
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
+//        final ObjectMapper mapper = new ObjectMapper();
+//        try
+//        {
+//            return mapper.writeValueAsString(this);
+//        }
+//        catch (Exception e)
+//        {
+//            throw new RuntimeException(e);
+//        }
+
+        return "";
     }
 
     public final boolean isLogLevelNotDefault()
@@ -308,7 +318,7 @@ public final class Config
         for (final Field configField : configClass.getDeclaredFields())
         {
             // Skip fields not annotated as json props
-            if (!configField.isAnnotationPresent(JsonProperty.class))
+            if (!configField.isAnnotationPresent(ConfigField.class))
                 continue;
 
             final Field cliField = cliFields.get(configField.getName());

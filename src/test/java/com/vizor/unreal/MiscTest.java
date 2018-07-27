@@ -162,6 +162,39 @@ public class MiscTest
     }
 
     @Test
+    public void testSnakeCaseToCamelCaseLowercase()
+    {
+        // Digits
+        assertEquals(snakeCaseToCamelCase("42", false), "42");
+        assertEquals(snakeCaseToCamelCase("_42__", false), "42");
+        assertEquals(snakeCaseToCamelCase("42_23", false), "4223");
+
+        // One word
+        assertEquals(snakeCaseToCamelCase("hello", false), "hello");
+        assertEquals(snakeCaseToCamelCase("Hello", false), "hello");
+        assertEquals(snakeCaseToCamelCase("HELLO", false), "hello");
+
+        assertEquals(snakeCaseToCamelCase("__hello", false), "hello");
+        assertEquals(snakeCaseToCamelCase("hello__", false), "hello");
+        assertEquals(snakeCaseToCamelCase("_hello_", false), "hello");
+
+        // Two words
+        assertEquals(snakeCaseToCamelCase("hello_world", false), "helloWorld");
+        assertEquals(snakeCaseToCamelCase("HELLO_WORLD", false), "helloWorld");
+        assertEquals(snakeCaseToCamelCase("Hello_World", false), "helloWorld");
+        assertEquals(snakeCaseToCamelCase("heLLo_woRLd", false), "helloWorld");
+
+        assertEquals(snakeCaseToCamelCase("__hello__world", false), "helloWorld");
+        assertEquals(snakeCaseToCamelCase("Hello__World__", false), "helloWorld");
+        assertEquals(snakeCaseToCamelCase("_heLLo__woRLd_", false), "helloWorld");
+
+        // Two words (with digits)
+        assertEquals(snakeCaseToCamelCase("42_hello_world", false), "42HelloWorld");
+        assertEquals(snakeCaseToCamelCase("hello_42_world", false), "hello42World");
+        assertEquals(snakeCaseToCamelCase("hello_world_42", false), "helloWorld42");
+    }
+
+    @Test
     public void testSpaceSeparatedToCamelCase()
     {
         // Digits

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import static java.lang.Character.isJavaIdentifierPart;
 import static java.lang.Character.isLowerCase;
 import static java.lang.Character.isUpperCase;
 import static java.lang.Character.isWhitespace;
+import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
 import static java.nio.file.Files.walk;
 import static java.nio.file.Paths.get;
@@ -235,17 +237,49 @@ public class Misc
         return result;
     }
 
+    /**
+     * Transforms snake_case_string into camelCaseString.
+     * @param snakeCaseString String in snake_case.
+     *
+     * @return Input snake_case string transformed to camelCase.
+     */
     public static String snakeCaseToCamelCase(final String snakeCaseString)
+    {
+        return snakeCaseToCamelCase(snakeCaseString, true);
+    }
+
+    /**
+     * Transforms snake_case_string into camelCaseString.
+     * @param snakeCaseString String in snake_case
+     * @param firstLetterIsCapital True to make the first letter of the output string capital. False to make it lowercase.
+     *
+     * @return Input snake_case string transformed to camelCase.
+     */
+    public static String snakeCaseToCamelCase(final String snakeCaseString, boolean firstLetterIsCapital)
     {
         final StringBuilder sb = new StringBuilder(snakeCaseString.length());
 
-        for (final String s : snakeCaseString.split("_"))
+        // Split our snake case string by snake separator, simultaneously excluding empty strings
+        // This is faster than more sophisticated regex.
+        final String[] split = stream(snakeCaseString.split("_"))
+                .filter(i -> i.length() != 0)
+                .toArray(String[]::new);
+
+        for (int i = 0; i < split.length; i++)
         {
+            String s = split[i];
             final int wordLength = s.length();
 
             if (wordLength > 0)
             {
-                sb.append(toUpperCase(s.charAt(0)));
+                // The first letter may be either lower or upper case, depending of 'firstLetterIsCapital' flag
+                final char firstLetter;
+                if ((i > 0) || firstLetterIsCapital)
+                    firstLetter = toUpperCase(s.charAt(0));
+                else
+                    firstLetter = toLowerCase(s.charAt(0));
+
+                sb.append(firstLetter);
 
                 if (wordLength > 1)
                     sb.append(s.substring(1).toLowerCase());
