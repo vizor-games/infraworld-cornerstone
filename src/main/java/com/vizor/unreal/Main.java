@@ -64,7 +64,7 @@ public class Main
             final Level previousLevel = log.getLevel();
 
             final String packageName = Main.class.getPackage().getName();
-            final Level logLevel = config.getLogLevel();
+            final Level logLevel = config.getLog4jLogLevel();
 
             setLevel(packageName, logLevel);
             log.debug("Changed {} log level from {} to {}", packageName, previousLevel.name(), logLevel.name());

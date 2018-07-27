@@ -60,7 +60,7 @@ public class Converter
         Stream<Tuple<Path, Path>> pathStream = paths.stream();
 
         // Mark
-        if (!Config.get().canNoFork())
+        if (!Config.get().isNoFork())
             pathStream = pathStream.parallel();
 
         pathStream.forEach(t -> {

@@ -44,6 +44,7 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.apache.logging.log4j.LogManager.getRootLogger;
 
+@SuppressWarnings("unused")
 public final class Config
 {
     private static final Logger log = getLogger(Config.class);
@@ -79,6 +80,86 @@ public final class Config
     @JsonProperty(value = "no_fork", defaultValue = "false")
     private boolean noFork;
 
+
+    public final String getSrcPath()
+    {
+        return srcPath;
+    }
+
+    public void setSrcPath(String srcPath)
+    {
+        this.srcPath = srcPath;
+    }
+
+    public final String getDstPath()
+    {
+        return dstPath;
+    }
+
+    public void setDstPath(String dstPath)
+    {
+        this.dstPath = dstPath;
+    }
+
+    public final String getModuleName()
+    {
+        return moduleName;
+    }
+
+    public void setModuleName(String moduleName)
+    {
+        this.moduleName = moduleName;
+    }
+
+    public final String getPrecompiledHeader()
+    {
+        return precompiledHeader;
+    }
+
+    public void setPrecompiledHeader(String precompiledHeader)
+    {
+        this.precompiledHeader = precompiledHeader;
+    }
+
+    public final String getWrappersPath()
+    {
+        return wrappersPath;
+    }
+
+    public void setWrappersPath(String wrappersPath)
+    {
+        this.wrappersPath = wrappersPath;
+    }
+
+    public final String getCompanyName()
+    {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName)
+    {
+        this.companyName = companyName;
+    }
+
+    public String getLogLevel()
+    {
+        return logLevel;
+    }
+
+    public void setLogLevel(String logLevel)
+    {
+        this.logLevel = logLevel;
+    }
+
+    public boolean isNoFork()
+    {
+        return noFork;
+    }
+
+    public void setNoFork(boolean noFork)
+    {
+        this.noFork = noFork;
+    }
 
     /**
      * If we're not in jar -> loads the config ONLY from the 'resources' directory.
@@ -158,42 +239,12 @@ public final class Config
         }
     }
 
-    public final String getSrcPath()
-    {
-        return srcPath;
-    }
-
-    public final String getDstPath()
-    {
-        return dstPath;
-    }
-
-    public final String getModuleName()
-    {
-        return moduleName;
-    }
-
-    public final String getPrecompiledHeader()
-    {
-        return precompiledHeader;
-    }
-
-    public final String getWrappersPath()
-    {
-        return wrappersPath;
-    }
-
-    public final String getCompanyName()
-    {
-        return companyName;
-    }
-
     public final boolean isLogLevelNotDefault()
     {
         return !stringIsNullOrEmpty(logLevel);
     }
 
-    public final Level getLogLevel()
+    public final Level getLog4jLogLevel()
     {
         return stream(Level.values())
             .filter(l -> {
@@ -201,11 +252,6 @@ public final class Config
                 return currentLevel.equalsIgnoreCase(logLevel);
             })
             .findFirst().orElse(getRootLogger().getLevel());
-    }
-
-    public boolean canNoFork()
-    {
-        return noFork;
     }
 
     private void checkString(final String string, final String failMessage)
