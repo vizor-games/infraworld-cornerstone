@@ -18,6 +18,8 @@ package com.vizor.unreal.config;
 import com.vizor.unreal.util.CliHandler.Parse;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.DumperOptions.FlowStyle;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.introspector.Property;
@@ -225,9 +227,7 @@ public final class Config
                 }
             });
 
-            final Yaml yaml = new Yaml(constructor);
-
-            config = yaml.loadAs(getConfigStream(), Config.class);
+            config = new Yaml(constructor).loadAs(getConfigStream(), Config.class);
         }
 
         return config;
@@ -236,17 +236,10 @@ public final class Config
     @Override
     public String toString()
     {
-//        final ObjectMapper mapper = new ObjectMapper();
-//        try
-//        {
-//            return mapper.writeValueAsString(this);
-//        }
-//        catch (Exception e)
-//        {
-//            throw new RuntimeException(e);
-//        }
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(FlowStyle.BLOCK);
 
-        return "";
+        return new Yaml(options).dump(this);
     }
 
     public final boolean isLogLevelNotDefault()
