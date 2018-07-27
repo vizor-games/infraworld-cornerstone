@@ -32,6 +32,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
@@ -185,11 +186,14 @@ public final class Config
 
         final boolean isInJar = !pathToJar.endsWith("/") && pathToJar.endsWith(".jar");
 
+        // Only excelsior jet is now supported
+        final boolean isAotCompiled = nonNull(System.getProperty("jet.exe.dir"));
+
         if (isInJar)
         {
             // If in jar -> the config must be loaded
-            final String pathToConfigFolder = pathToJar.substring(0, pathToJar.lastIndexOf("/"));
-            final String pathToConfig = Paths.get(pathToConfigFolder, configFileName).toString();
+            final Path pathToConfigFolder = Paths.get("").toAbsolutePath().normalize();
+            final String pathToConfig = pathToConfigFolder.resolve(configFileName).toString();
 
             try
             {
@@ -200,8 +204,9 @@ public final class Config
             }
             catch (final Throwable t)
             {
-                log.info("Override config not found (might be placed as {}), got {}",
-                        pathToConfig, t.toString());
+                // Override config is mandatory if cornerstone is compiled into an executable
+                log.fatal("Please, put your {} into {}", configFileName, pathToConfigFolder);
+                System.exit(1);
             }
         }
 
