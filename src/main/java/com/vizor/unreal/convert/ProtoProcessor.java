@@ -103,6 +103,10 @@ class ProtoProcessor implements Runnable
         this.wrapperName = removeExtension(pathToProto.toFile().getName());
 
         this.className = snakeCaseToCamelCase(wrapperName);
+
+        if (parse.packageName() == null)
+            throw new RuntimeException("package filed in proto file is required for cornerstone");
+
         this.packageNamespace = new CppNamespace(parse.packageName());
     }
 
