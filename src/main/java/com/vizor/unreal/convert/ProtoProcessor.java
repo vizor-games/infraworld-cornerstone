@@ -41,12 +41,10 @@ import com.vizor.unreal.tree.preprocessor.CppPragma;
 import com.vizor.unreal.util.MessageOrderResolver;
 import com.vizor.unreal.util.Tuple;
 import com.vizor.unreal.writer.CppPrinter;
-import javafx.scene.effect.Reflection;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.squareup.wire.schema.Field.Label.REPEATED;
