@@ -41,10 +41,12 @@ import com.vizor.unreal.tree.preprocessor.CppPragma;
 import com.vizor.unreal.util.MessageOrderResolver;
 import com.vizor.unreal.util.Tuple;
 import com.vizor.unreal.writer.CppPrinter;
+import javafx.scene.effect.Reflection;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.squareup.wire.schema.Field.Label.REPEATED;
@@ -103,6 +105,10 @@ class ProtoProcessor implements Runnable
         this.wrapperName = removeExtension(pathToProto.toFile().getName());
 
         this.className = snakeCaseToCamelCase(wrapperName);
+
+        if (parse.packageName() == null)
+            throw new RuntimeException("package filed in proto file is required for cornerstone");
+
         this.packageNamespace = new CppNamespace(parse.packageName());
     }
 
