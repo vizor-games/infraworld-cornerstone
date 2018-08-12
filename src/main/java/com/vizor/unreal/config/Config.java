@@ -16,6 +16,7 @@
 package com.vizor.unreal.config;
 
 import com.vizor.unreal.util.CliHandler.Parse;
+import com.vizor.unreal.util.Misc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.DumperOptions;
@@ -26,6 +27,7 @@ import org.yaml.snakeyaml.introspector.Property;
 import org.yaml.snakeyaml.introspector.PropertyUtils;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -47,6 +49,7 @@ import static java.lang.Thread.currentThread;
 import static java.util.Arrays.stream;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -187,25 +190,31 @@ public final class Config
         final boolean isInJar = !pathToJar.endsWith("/") && pathToJar.endsWith(".jar");
 
         // Only excelsior jet is now supported
-        final boolean isAotCompiled = nonNull(System.getProperty("jet.exe.dir"));
+        final boolean isJetCompiled = nonNull(System.getProperty("jet.exe.dir"));
 
-        if (isInJar)
+        if (isInJar || isJetCompiled)
         {
-            // If in jar -> the config must be loaded
-            final Path pathToConfigFolder = Paths.get("").toAbsolutePath().normalize();
-            final String pathToConfig = pathToConfigFolder.resolve(configFileName).toString();
+            // If integrally compiled  -> the config must be loaded
+            final Path configSearchFolder;
+
+            if (isInJar)
+                configSearchFolder = Paths.get(pathToJar).getParent();
+            else
+                configSearchFolder = Paths.get(System.getProperty("jet.exe.dir"));
+
+            final Path pathToConfig = requireNonNull(configSearchFolder).resolve(configFileName);
 
             try
             {
-                final FileInputStream fs = new FileInputStream(pathToConfig);
+                final FileInputStream fs = new FileInputStream(pathToConfig.toString());
                 log.info("Override config found: {}", pathToConfig);
 
                 return fs;
             }
-            catch (final Throwable t)
+            catch (FileNotFoundException t)
             {
                 // Override config is mandatory if cornerstone is compiled into an executable
-                log.fatal("Please, put your {} into {}", configFileName, pathToConfigFolder);
+                log.fatal("Please, put your {} into {}", configFileName, configSearchFolder);
                 System.exit(1);
             }
         }
@@ -294,10 +303,7 @@ public final class Config
 
         if (!stringIsNullOrEmpty(logLevel))
         {
-            final List<String> availableOptions = stream(Level.values())
-                .map(Level::name)
-                .map(String::toLowerCase)
-                .collect(toList());
+            final List<String> availableOptions = Misc.getLowercaseLog4jLevels();
 
             if (!availableOptions.contains(logLevel))
                 throw new RuntimeException("Selected option '" + logLevel + "' not found among available options: " +

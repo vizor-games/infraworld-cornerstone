@@ -23,8 +23,8 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
 import java.io.PrintWriter;
-import java.util.Arrays;
 
+import static com.vizor.unreal.util.Misc.getLowercaseLog4jLevels;
 import static java.lang.System.exit;
 import static java.lang.System.lineSeparator;
 import static java.util.Arrays.asList;
@@ -44,7 +44,8 @@ public final class CliHandler
     private static Option srcOption = new Option("s", "src_path", true, "Proto files root folder");
     private static Option dstOption = new Option("d", "dst_path", true, "Cpp generated files destination folder");
     private static Option moduleNameOption = new Option("m", "module_name", true, "UE 4 API/Plugin name");
-    private static Option logLevelOption = new Option("l", "log_level", true, "Print this help message");
+    private static Option logLevelOption = new Option("l", "log_level", true, "Override log level. Available options are: " +
+        getLowercaseLog4jLevels().toString());
     private static Option helpOption = new Option("h", "help", false, "Print this help message");
     private static Option creditsOption = new Option("credits", false, "Print the creators of Cornerstone");
 

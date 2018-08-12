@@ -15,11 +15,12 @@
  */
 package com.vizor.unreal.util;
 
+import org.apache.logging.log4j.Level;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,13 @@ import static java.util.stream.Collectors.toList;
 public class Misc
 {
     public static final String TAB = "    ";
+
+    /**
+     * Unfortunately, you can not calculate a real deadweight tonnage of a string.
+     * But it is *slightly* less than {@link Integer#MAX_VALUE}
+     * See for details: https://stackoverflow.com/questions/1179983/how-many-characters-can-a-java-string-have
+     */
+    private static final int MAX_CHARS_IN_STRING = Integer.MAX_VALUE - 10;
 
     /**
      * Returns an input string without whitespaces.
@@ -324,15 +332,27 @@ public class Misc
     {
         switch (n)
         {
+            // slight optimization for special cases
             case 0:
                 return "";
             case 1:
                 return TAB;
+
+            // slow path for natural numbers
             default:
                 if (n < 0)
                     throw new IllegalArgumentException("n mustn't be negative, got " + n + " instead");
 
-                final StringBuilder sb = new StringBuilder(TAB.length() * n);
+                final int actualNumChars = TAB.length() * n;
+
+                // String mustn't exceed MAX_CHARS_IN_STRING, which is surprisingly lesser than max int value.K
+                if (actualNumChars > MAX_CHARS_IN_STRING)
+                {
+                    throw new IllegalArgumentException("actual number of tabs mustn't exceed " + MAX_CHARS_IN_STRING +
+                        ", got " + actualNumChars + " instead");
+                }
+
+                final StringBuilder sb = new StringBuilder(actualNumChars);
 
                 for (int i = 0; i < n; i++)
                     sb.append(TAB);
@@ -358,5 +378,20 @@ public class Misc
         catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Retrieves lowercase names of all supported log4j log levels sorted by its priority.
+     * @see org.apache.logging.log4j.Level for details.
+     *
+     * @return A list of all supported log4j levels.
+     */
+    public static List<String> getLowercaseLog4jLevels()
+    {
+        return stream(Level.values())
+            .sorted(Level::compareTo)
+            .map(Level::name)
+            .map(String::toLowerCase)
+            .collect(toList());
     }
 }

@@ -23,7 +23,6 @@ import com.vizor.unreal.tree.CppField;
 import com.vizor.unreal.tree.CppFunction;
 import com.vizor.unreal.tree.CppRecord;
 import com.vizor.unreal.tree.CppStruct;
-import com.vizor.unreal.util.Misc;
 import com.vizor.unreal.writer.CppPrinter;
 
 import java.util.Collection;
