@@ -15,6 +15,7 @@
  */
 package com.vizor.unreal.tree.preprocessor;
 
-public interface PreprocessorStatement
-{
-}
+/**
+ * Indicates that this class is being used as preprocessor statement in the syntax tree.
+ */
+interface PreprocessorStatement {}

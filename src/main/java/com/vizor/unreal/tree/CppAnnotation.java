@@ -16,10 +16,8 @@
 package com.vizor.unreal.tree;
 
 import java.util.Collection;
-import java.util.List;
 
 import static java.lang.String.join;
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
 public enum CppAnnotation
@@ -49,25 +47,22 @@ public enum CppAnnotation
     Category(CppRecord.class);
 
     public final boolean isMeta;
-    private final List<Class<? extends CppRecord>> target;
+    private final Class<? extends CppRecord>[] targetClasses;
 
-    CppAnnotation(Class<? extends CppRecord>... classes)
+    @SafeVarargs
+    CppAnnotation(Class<? extends CppRecord>... targetClasses)
     {
-        this(false, classes);
+        this(false, targetClasses);
     }
 
-    CppAnnotation(boolean isMeta, Class<? extends CppRecord>... classes)
+    @SafeVarargs
+    CppAnnotation(boolean isMeta, Class<? extends CppRecord>... targetClasses)
     {
         this.isMeta = isMeta;
-        this.target = asList(classes);
+        this.targetClasses = targetClasses;
     }
 
-    public final boolean matchesTarget(Class<? extends CppRecord> clazz)
-    {
-        return target.contains(clazz);
-    }
-
-    private static String flattenProps(Collection<String> nonMeta, Collection<String> meta)
+    private static String flattenProps(final Collection<String> nonMeta, final Collection<String> meta)
     {
         // if has some meta, wrap 'meta=(a, b, c)' and putTrough it to the end
         if (!meta.isEmpty())
@@ -76,37 +71,37 @@ public enum CppAnnotation
         return join(", ", nonMeta);
     }
 
-    public static String upropertyOf(Collection<String> nonMeta, Collection<String> meta)
+    public static String upropertyOf(final Collection<String> nonMeta, final Collection<String> meta)
     {
         return "UPROPERTY(" + flattenProps(nonMeta, meta) + ')';
     }
 
-    public static String ustructOf(Collection<String> nonMeta, Collection<String> meta)
+    public static String ustructOf(final Collection<String> nonMeta, final Collection<String> meta)
     {
         return "USTRUCT(" + flattenProps(nonMeta, meta) + ')';
     }
 
-    public static String uclassOf(Collection<String> nonMeta, Collection<String> meta)
+    public static String uclassOf(final Collection<String> nonMeta, final Collection<String> meta)
     {
         return "UCLASS(" + flattenProps(nonMeta, meta) + ')';
     }
 
-    public static String uparamOf(Collection<String> nonMeta, Collection<String> meta)
+    public static String uparamOf(final Collection<String> nonMeta, final Collection<String> meta)
     {
         return "UPARAM(" + flattenProps(nonMeta, meta) + ')';
     }
 
-    public static String ufunctionOf(Collection<String> nonMeta, Collection<String> meta)
+    public static String ufunctionOf(final Collection<String> nonMeta, final Collection<String> meta)
     {
         return "UFUNCTION(" + flattenProps(nonMeta, meta) + ')';
     }
 
-    public static String uenumOf(Collection<String> nonMeta, Collection<String> meta)
+    public static String uenumOf(final Collection<String> nonMeta, final Collection<String> meta)
     {
         return "UENUM(" + flattenProps(nonMeta, meta) + ')';
     }
 
-    public static String umetaOf(Collection<String> meta)
+    public static String umetaOf(final Collection<String> meta)
     {
         return "UMETA(" + flattenProps(meta, emptyList()) + ')';
     }

@@ -21,57 +21,56 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static java.lang.Character.isWhitespace;
 import static java.lang.Math.max;
 import static java.lang.String.join;
 import static java.lang.System.lineSeparator;
 
-public final class ContentWriter
+final class ContentWriter
 {
-    private static final Pattern spaceFinder = Pattern.compile("\\s+");
-
     private final List<String> lines = new ArrayList<>();
     private StringBuilder currentLine = new StringBuilder();
 
     private int numTabs = 0;
 
-    public void incTabs()
+    void incTabs()
     {
         ++numTabs;
     }
 
-    public void decTabs()
+    void decTabs()
     {
         numTabs = max(0, numTabs - 1);
     }
 
-    public void write(String s)
+    void write(final String s)
     {
         currentLine.append(s);
     }
 
-    public void writeLine(String s)
+    void writeLine(final String s)
     {
         currentLine.append(s);
         newLine();
     }
 
-    public void backspace()
+    void backspace(final int times)
     {
+        // Can not operate with negative indices
+        if (times < 0)
+            throw new IllegalArgumentException("Can not operate with negative index. Actual index: " + times);
+
         final int length = currentLine.length();
-        if (length > 0)
-            currentLine.deleteCharAt(length - 1);
+
+        // Trim trailing characters if number of backspaces is lesser than current string builder's length
+        if (times < length)
+            currentLine.delete(length - times, length);
+        else
+            currentLine.setLength(0);
     }
 
-    public void backspace(int times)
-    {
-        for (int i = 0; i < times; i++)
-            backspace();
-    }
-
-    public void newLine()
+    void newLine()
     {
         trimTrailingSpaces(currentLine);
 
@@ -89,15 +88,15 @@ public final class ContentWriter
         }
     }
 
-    public void removeLine()
+    void removeLine()
     {
         if (!lines.isEmpty())
             lines.remove(lines.size() - 1);
     }
 
-    public void writeToFile(String fileName)
+    void writeToFile(final String fileName)
     {
-        try (PrintWriter pw = new PrintWriter(fileName))
+        try (final PrintWriter pw = new PrintWriter(fileName))
         {
             lines.forEach(pw::println);
             pw.println(currentLine.toString());
@@ -108,9 +107,10 @@ public final class ContentWriter
         }
     }
 
-    private static void trimTrailingSpaces(StringBuilder sb)
+    private static void trimTrailingSpaces(final StringBuilder sb)
     {
         final int length = sb.length();
+
         for (int i = length - 1; (i >= 0) && isWhitespace(sb.charAt(i)); i--)
             sb.deleteCharAt(i);
     }
@@ -121,6 +121,6 @@ public final class ContentWriter
         final List<String> list = new ArrayList<>(lines);
         lines.add(currentLine.toString());
 
-        return !lines.isEmpty() ? join(lineSeparator(), list) : "<<< empty >>>";
+        return !lines.isEmpty() ? join(lineSeparator(), list) : "";
     }
 }
