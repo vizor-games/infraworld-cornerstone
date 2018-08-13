@@ -19,10 +19,8 @@ import com.vizor.unreal.tree.CppNamespace;
 import com.vizor.unreal.tree.CppType;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.vizor.unreal.tree.CppType.Passage.ByPtr;
 import static com.vizor.unreal.tree.CppType.Passage.ByRef;

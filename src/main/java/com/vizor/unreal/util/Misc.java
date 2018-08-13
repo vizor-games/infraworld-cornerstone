@@ -21,14 +21,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Predicate;
 
 import static java.lang.Character.isDigit;
 import static java.lang.Character.isJavaIdentifierPart;
 import static java.lang.Character.isLowerCase;
+import static java.lang.Character.isSpaceChar;
 import static java.lang.Character.isUpperCase;
 import static java.lang.Character.isWhitespace;
 import static java.lang.Character.toLowerCase;
@@ -178,6 +177,7 @@ public class Misc
      * this method will split generic arguments, no matter whether they are generics too, or not
      * to do this, it counts angular brackets and splits generic args.
      * @param sourceString string containing comma-separated generic arguments.
+     *
      * @return list of generic arguments names.
      */
     public static List<String> splitGeneric(String sourceString)
@@ -233,16 +233,15 @@ public class Misc
     {
         final List<T> copy = stream(indices).mapToObj(list::get).collect(toList());
 
-        list.clear();
-        list.addAll(copy);
-    }
-
-    public static <T, U> Map<U, T> rotateMap(final Map<T, U> map)
-    {
-        final HashMap<U, T> result = new HashMap<>(map.size());
-        map.forEach((t, u) -> result.put(u, t));
-
-        return result;
+        try
+        {
+            list.clear();
+            list.addAll(copy);
+        }
+        catch (UnsupportedOperationException uoe)
+        {
+            throw new RuntimeException("Input list must be mutable in order to perform rearrange");
+        }
     }
 
     /**
@@ -261,7 +260,7 @@ public class Misc
      * @param snakeCaseString String in snake_case
      * @param firstLetterIsCapital True to make the first letter of the output string capital. False to make it lowercase.
      *
-     * @return Input snake_case string transformed to camelCase.
+     * @return Input 'snake_case_string' converted into 'camelCaseString'.
      */
     public static String snakeCaseToCamelCase(final String snakeCaseString, boolean firstLetterIsCapital)
     {
@@ -297,27 +296,69 @@ public class Misc
         return sb.toString();
     }
 
+    /**
+     * Converts a space-separated string into camel case string.
+     * @param spaceSeparatedString Space-separated string (words) to be converted into camel case string.
+     *
+     * @return Input 'words string' converted into 'CamelCaseString'.
+     */
     public static String spaceSeparatedToCamelCase(final String spaceSeparatedString)
     {
-        final StringBuilder sb = new StringBuilder(spaceSeparatedString.length());
+        final int rawLength = spaceSeparatedString.length();
 
-        // No need to use a slower regex (such as '\\s+'), cause empty words will be wiped out anyway.
-        for (final String s : spaceSeparatedString.split(" "))
+        if (rawLength > 0)
         {
-            final int wordLength = s.length();
-
-            if (wordLength > 0)
+            int numSpaces = 0;
+            for (int i = 0; i < rawLength; i++)
             {
-                sb.append(toUpperCase(s.charAt(0)));
+                numSpaces += isSpaceChar(spaceSeparatedString.charAt(i)) ? 1 : 0;
+            }
 
-                if (wordLength > 1)
-                    sb.append(s.substring(1).toLowerCase());
+            if (numSpaces < rawLength)
+            {
+                final StringBuilder sb = new StringBuilder();
+
+                // 'true' or 'false' here determines whether the very first letter is upper- or lowercase
+                boolean shouldBeUppercase = true;
+
+                for (int i = 0; i < rawLength; i++)
+                {
+                    final char currentChar = spaceSeparatedString.charAt(i);
+
+                    if (isSpaceChar(currentChar))
+                    {
+                        // Only reset to uppercase if there are some character within the StringBuilder
+                        // (to prevent first character either upper- or lowercase, no matter of leading spaces count)
+                        if (sb.length() > 0)
+                            shouldBeUppercase = true;
+                    }
+                    else
+                    {
+                        if (shouldBeUppercase)
+                        {
+                            sb.append(toUpperCase(currentChar));
+                            shouldBeUppercase = false;
+                        }
+                        else
+                        {
+                            sb.append(toLowerCase(currentChar));
+                        }
+                    }
+                }
+
+                return sb.toString();
             }
         }
 
-        return sb.toString();
+        return "";
     }
 
+    /**
+     * Returns whether the string is null or empty.
+     * @param string String to be check for emptiness.
+     *
+     * @return True if the string is null or contains no characters (is empty).
+     */
     public static boolean stringIsNullOrEmpty(final String string)
     {
         return isNull(string) || string.isEmpty();
@@ -326,6 +367,7 @@ public class Misc
     /**
      * Returns a string containing n number of tabs.
      * @param n Number of tabs to insert, must not be negative.
+     *
      * @return String containing n tabs.
      */
     public static String nTabs(int n)

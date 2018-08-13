@@ -19,20 +19,16 @@ import com.vizor.unreal.util.Misc;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import static com.vizor.unreal.util.Misc.TAB;
 import static com.vizor.unreal.util.Misc.removeWhitespaces;
 import static com.vizor.unreal.util.Misc.reorder;
-import static com.vizor.unreal.util.Misc.rotateMap;
 import static com.vizor.unreal.util.Misc.snakeCaseToCamelCase;
 import static com.vizor.unreal.util.Misc.spaceSeparatedToCamelCase;
 import static com.vizor.unreal.util.Misc.splitGeneric;
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
-import static java.lang.Integer.valueOf;
 import static java.lang.String.join;
 import static java.util.Arrays.asList;
 import static java.util.Collections.shuffle;
@@ -104,28 +100,6 @@ public class MiscTest
         reorder(integers, new int[]{0, 1, 2, 2, 1, 0});
 
         assertEquals(integers, asList(10, 20, 30, 30, 20, 10));
-    }
-
-    @Test
-    public void testRotateMap()
-    {
-        final HashMap<Integer, String> map = new HashMap<>();
-        map.put(0, "Zero");
-        map.put(1, "One");
-        map.put(2, "Two");
-        map.put(3, "Three");
-        map.put(4, "Four");
-
-        final Map<String, Integer> rot = rotateMap(map);
-
-        assertEquals(rot.get("Zero"), valueOf(0));
-        assertEquals(rot.get("One"), valueOf(1));
-        assertEquals(rot.get("Two"), valueOf(2));
-        assertEquals(rot.get("Three"), valueOf(3));
-        assertEquals(rot.get("Four"), valueOf(4));
-
-        // Rotate againg and compare with previous
-        assertEquals(map, rotateMap(rot));
     }
 
     @Test
