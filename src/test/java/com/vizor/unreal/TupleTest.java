@@ -38,7 +38,7 @@ public class TupleTest
     @Test
     public void testInvert()
     {
-        final Tuple<String, Integer> t = Tuple.of(1, "Hello").invert();
+        final Tuple<String, Integer> t = Tuple.of(1, "Hello").rotate();
 
         assertEquals(t.first(), "Hello");
         assertEquals(t.second(), valueOf(1));

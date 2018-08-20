@@ -501,7 +501,7 @@ public class CppPrinter implements AutoCloseable
         final CppMacroIf.Branch ifBranch = cppMacroIf.getIfBranch();
         final CppMacroIf.Branch elseBranch = cppMacroIf.getElseBranch();
 
-        final List<CppMacroIf.Branch> elifBranches = cppMacroIf.getElifBranches();
+        final List<CppMacroIf.Branch> elseIfBranches = cppMacroIf.getElseIfBranches();
 
         newLine();
         write("#if ").writeLine(ifBranch.getCondition());
@@ -511,7 +511,7 @@ public class CppPrinter implements AutoCloseable
         decTab();
 
         // Write else if branches
-        for (final CppMacroIf.Branch eb : elifBranches)
+        for (final CppMacroIf.Branch eb : elseIfBranches)
         {
             write("#elif ").writeLine(eb.getCondition());
 

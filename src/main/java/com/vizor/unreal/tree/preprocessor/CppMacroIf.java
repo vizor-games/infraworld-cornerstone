@@ -89,7 +89,7 @@ public class CppMacroIf extends CppRecord implements PreprocessorStatement
     };
 
     private final Branch ifBranch;
-    private List<Branch> elifBranches = new ArrayList<>(0);
+    private List<Branch> elseIfBranches = new ArrayList<>(0);
     private Branch elseBranch = DUMMY_BRANCH;
 
     public CppMacroIf(final Residence residence, final String condition, final CppRecord... records)
@@ -108,7 +108,7 @@ public class CppMacroIf extends CppRecord implements PreprocessorStatement
 
     public final CppMacroIf elseIf(final String condition, final CppRecord... records)
     {
-        elifBranches.add(new Branch(condition, asList(records)));
+        elseIfBranches.add(new Branch(condition, asList(records)));
 
         return this;
     }
@@ -118,9 +118,9 @@ public class CppMacroIf extends CppRecord implements PreprocessorStatement
         return ifBranch;
     }
 
-    public final List<Branch> getElifBranches()
+    public final List<Branch> getElseIfBranches()
     {
-        return unmodifiableList(elifBranches);
+        return unmodifiableList(elseIfBranches);
     }
 
     public final Branch getElseBranch()
@@ -138,7 +138,7 @@ public class CppMacroIf extends CppRecord implements PreprocessorStatement
     @Override
     public int hashCode()
     {
-        return Objects.hash(ifBranch, elifBranches, elseBranch);
+        return Objects.hash(ifBranch, elseIfBranches, elseBranch);
     }
 
     @Override
@@ -152,7 +152,7 @@ public class CppMacroIf extends CppRecord implements PreprocessorStatement
             final CppMacroIf other = (CppMacroIf) obj;
 
             return Objects.equals(ifBranch, other.ifBranch)
-                && Objects.equals(elifBranches, other.elifBranches)
+                && Objects.equals(elseIfBranches, other.elseIfBranches)
                 && Objects.equals(elseBranch, other.elseBranch);
         }
 
@@ -169,7 +169,7 @@ public class CppMacroIf extends CppRecord implements PreprocessorStatement
         sb.append("#if ").append(ifBranch.condition).append(lineSeparator());
         sb.append(squasher.apply(ifBranch.records));
 
-        elifBranches.forEach(elseIfBranch -> {
+        elseIfBranches.forEach(elseIfBranch -> {
             sb.append("#elif ").append(elseIfBranch.condition).append(lineSeparator());
             sb.append(squasher.apply(elseIfBranch.records));
         });
