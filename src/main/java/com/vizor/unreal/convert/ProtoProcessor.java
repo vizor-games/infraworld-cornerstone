@@ -212,14 +212,7 @@ class ProtoProcessor implements Runnable
             new CppInclude(Cpp, "RpcClientWorker.h"),
             new CppInclude(Cpp, "CastUtils.h"),
 
-            new CppMacroIf(Cpp,"PLATFORM_WINDOWS",
-                new CppInclude(Cpp, "AllowWindowsPlatformTypes.h", false),
-                new CppPragma(Cpp, "warning(push)"),
-                new CppPragma(Cpp, "warning (disable : 4125)", "decimal digit terminates..."),
-                new CppPragma(Cpp, "warning (disable : 4647)", "behavior change __is_pod..."),
-                new CppPragma(Cpp, "warning (disable : 4668)", "'symbol' is not defined as a preprocessor macro..."),
-                new CppPragma(Cpp, "warning (disable : 4456)", "declaration of 'size' hides previous local declaration")
-            ),
+            new CppInclude(Cpp, "GrpcIncludesBegin.h"),
 
             new CppInclude(Cpp, "grpc/support/log.h", true),
             new CppInclude(Cpp, "grpc++/channel.h", true),
@@ -228,10 +221,7 @@ class ProtoProcessor implements Runnable
             new CppInclude(Cpp, generatedIncludeName + ".grpc.pb.hpp", false),
             new CppInclude(Cpp, "ChannelProvider.h", false),
 
-            new CppMacroIf(Cpp,"PLATFORM_WINDOWS",
-                new CppPragma(Cpp, "warning(pop)"),
-                new CppInclude(Cpp, "HideWindowsPlatformTypes.h", false)
-            )
+            new CppInclude(Cpp, "GrpcIncludesEnd.h")
         ));
 
         if (!stringIsNullOrEmpty(config.getPrecompiledHeader()))
