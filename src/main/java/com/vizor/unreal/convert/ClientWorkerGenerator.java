@@ -113,8 +113,8 @@ class ClientWorkerGenerator
             "",
             "FGrpcStatus GrpcStatus;",
             "",
-            "{2} Result(casts::Proto_Cast<{3}>(Response), GrpcStatus);",
             "casts::CastStatus(Status, GrpcStatus);",
+            "{2} Result(casts::Proto_Cast<{3}>(Response), GrpcStatus);",
             "",
             "return Result;"
         ));
