@@ -85,13 +85,16 @@ class ClientWorkerGenerator
         final List<CppField> cppFields = extractConduits(service);
         final List<CppField> fields = new ArrayList<>(cppFields);
 
+
+
         // 0 - Request Type
         // 1 - Response Type
         // 2 - UE Response Generic Type
         // 3 - UE Response Type
         // 4 - Package Name
+        // 5 - Function Name
         final String rpcMethodBody = join(lineSeparator(), asList(
-            "{4}::{0} ClientRequest(casts::Proto_Cast<{4}::{0}>(Request));",
+            "{4}{0} ClientRequest(casts::Proto_Cast<{4}{0}>(Request));",
             "",
             "grpc::ClientContext ClientContext;",
             "casts::CastClientContext(Context, ClientContext);",
@@ -99,9 +102,9 @@ class ClientWorkerGenerator
             "grpc::CompletionQueue Queue;",
             "grpc::Status Status;",
             "",
-            "std::unique_ptr<grpc::ClientAsyncResponseReader<{4}::{1}>> Rpc(Stub->Async{5}(&ClientContext, ClientRequest, &Queue));",
+            "std::unique_ptr<grpc::ClientAsyncResponseReader<{4}{1}>> Rpc(Stub->Async{5}(&ClientContext, ClientRequest, &Queue));",
             "",
-            "{4}::{1} Response;",
+            "{4}{1} Response;",
             "Rpc->Finish(&Response, &Status, (void*)1);",
             "",
             "void* got_tag;",
@@ -120,7 +123,6 @@ class ClientWorkerGenerator
         ));
 
         final List<CppFunction> methods = extractFunctions(service);
-
         for (int i = 0; i < methods.size(); i++)
         {
             final RpcElement rpc = service.rpcs().get(i);
@@ -130,7 +132,7 @@ class ClientWorkerGenerator
             final CppType responseWithStatus = rspWithSts.makeGeneric(response);
 
             function.setBody(format(rpcMethodBody, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
-                    response, parse.packageName(), function.getName()));
+                    response, getPackageNamespaceString(), function.getName()));
         }
 
         methods.add(createStubInitializer(service, fields));
@@ -157,10 +159,10 @@ class ClientWorkerGenerator
         sb.append("if (!Channel.get())").append(lineSeparator());
         sb.append("    return false;").append(lineSeparator()).append(lineSeparator());
 
-        final String initStubPattern = "Stub = {0}::{1}::NewStub(Channel);";
+        final String initStubPattern = "Stub = {0}{1}::NewStub(Channel);";
         final String acquireProducerPattern = "{0}->AcquireResponsesProducer();";
 
-        sb.append(format(initStubPattern, parse.packageName(), service.name()))
+        sb.append(format(initStubPattern, getPackageNamespaceString(), service.name()))
                 .append(lineSeparator()).append(lineSeparator());
 
         // Acquire all required conduits
@@ -215,7 +217,7 @@ class ClientWorkerGenerator
 
     private CppField createStub(final ServiceElement service)
     {
-        final CppType plain = plain(parse.packageName() + "::" + service.name() + "::Stub", Struct);
+        final CppType plain = plain(getPackageNamespaceString() + service.name() + "::Stub", Struct);
         final CppType stubPtr = wildcardUniquePtr.makeGeneric(plain);
         final CppField stub = new CppField(stubPtr, "Stub");
 
@@ -260,6 +262,11 @@ class ClientWorkerGenerator
                 return method;
             })
             .collect(toList());
+    }
+
+    private String getPackageNamespaceString()
+    {
+        return parse.packageName() != null ? parse.packageName() + "::" : "";
     }
 
 }

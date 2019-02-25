@@ -15,6 +15,7 @@
  */
 package com.vizor.unreal.tree;
 
+import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.vizor.unreal.writer.CppPrinter;
 
 import java.util.ArrayList;
@@ -406,8 +407,13 @@ public class CppType implements CtLeaf
     {
         final StringBuilder sb = new StringBuilder();
 
-        if (!namespaces.isEmpty())
-            namespaces.forEach(obj -> sb.append(obj.getName()).append("::"));
+        for (CppNamespace namespace : namespaces)
+        {
+            final String namespaceName = (namespace != null) ? namespace.getName() : null;
+            if (namespaceName != null)
+                sb.append(namespaceName).append("::");
+        }
+
 
         sb.append(name);
 

@@ -54,6 +54,11 @@ public final class CppNamespace extends CppRecord
         return name;
     }
 
+    public boolean hasName()
+    {
+        return name != null;
+    }
+
     @Override
     public CppPrinter accept(CppPrinter printer)
     {
