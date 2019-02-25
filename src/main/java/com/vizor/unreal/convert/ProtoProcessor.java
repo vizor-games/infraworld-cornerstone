@@ -104,8 +104,8 @@ class ProtoProcessor implements Runnable
 
         this.className = snakeCaseToCamelCase(wrapperName);
 
-        if (parse.packageName() == null)
-            throw new RuntimeException("package filed in proto file is required for cornerstone");
+//        if (parse.packageName() == null)
+//            throw new RuntimeException("package filed in proto file is required for cornerstone");
 
         this.packageNamespace = new CppNamespace(parse.packageName());
     }
@@ -342,13 +342,19 @@ class ProtoProcessor implements Runnable
         if (el instanceof MessageElement)
         {
             final CppType mt = plain(el.name(), Struct);
-            mt.setNamespaces(packageNamespace);
+
+            if (packageNamespace.hasName())
+                mt.setNamespaces(packageNamespace);
+
             return mt;
         }
         else if (el instanceof EnumElement)
         {
             final CppType et = plain(el.name(), Enum);
-            et.setNamespaces(packageNamespace);
+
+            if (packageNamespace.hasName())
+                et.setNamespaces(packageNamespace);
+
             return et;
         }
         else
