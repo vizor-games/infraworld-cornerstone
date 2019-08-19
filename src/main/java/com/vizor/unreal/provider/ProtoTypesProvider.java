@@ -70,14 +70,14 @@ public final class ProtoTypesProvider extends TypesProvider
     protected final void init()
     {
         register("byte", plain("unsigned char", Primitive), byte.class);
-        register("int32", plainNs("int32", Primitive, protobufNamespace), int.class);
-        register("int64", plainNs("int64", Primitive, protobufNamespace), long.class);
-        register("float", plainNs("float", Primitive, protobufNamespace), float.class);
+        register("int32", plain("int32", Primitive), int.class);
+        register("int64", plain("int64", Primitive), long.class);
+        register("float", plain("float", Primitive), float.class);
         register("bool", plain("bool", Primitive), boolean.class);
         register("void", plain("void", Primitive), void.class);
 
-        register("uint32", plainNs("uint32", Primitive, protobufNamespace));
-        register("uint64", plainNs("uint64", Primitive, protobufNamespace));
+        register("uint32", plain("uint32", Primitive));
+        register("uint64", plain("uint64", Primitive));
 
         register("string", plainNs("string", Struct, stdNs), String.class);
         register("map", genericNs("Map", Struct, 2, protobufNamespace), Map.class);
