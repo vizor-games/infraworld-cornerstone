@@ -52,6 +52,7 @@ import static com.vizor.unreal.tree.CppAnnotation.BlueprintReadWrite;
 import static com.vizor.unreal.tree.CppAnnotation.BlueprintType;
 import static com.vizor.unreal.tree.CppAnnotation.DisplayName;
 import static com.vizor.unreal.tree.CppAnnotation.Transient;
+import static com.vizor.unreal.tree.CppAnnotation.Category;
 import static com.vizor.unreal.tree.CppRecord.Residence.Cpp;
 import static com.vizor.unreal.tree.CppRecord.Residence.Header;
 import static com.vizor.unreal.tree.CppType.Kind.Enum;
@@ -296,6 +297,7 @@ class ProtoProcessor implements Runnable
                 field.javaDoc.set(sourceDoc);
 
             field.addAnnotation(fieldAnnotations);
+            field.addAnnotation(Category, me.name());
             fields.add(field);
         }
 
