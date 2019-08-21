@@ -244,6 +244,11 @@ public class Misc
         }
     }
 
+    public static String dashToUnderscore(final String dashedString)
+    {
+        return dashedString.replace("-", "_");
+    }
+
     /**
      * Transforms snake_case_string into camelCaseString.
      * @param snakeCaseString String in snake_case.

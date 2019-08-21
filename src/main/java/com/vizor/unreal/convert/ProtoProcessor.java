@@ -60,6 +60,7 @@ import static com.vizor.unreal.tree.CppType.Kind.Struct;
 import static com.vizor.unreal.tree.CppType.plain;
 import static com.vizor.unreal.util.Misc.reorder;
 import static com.vizor.unreal.util.Misc.snakeCaseToCamelCase;
+import static com.vizor.unreal.util.Misc.dashToUnderscore;
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
 import static com.vizor.unreal.util.Tuple.of;
 import static java.io.File.separator;
@@ -102,8 +103,8 @@ class ProtoProcessor implements Runnable
         this.moduleName = requireNonNull(moduleName);
 
         this.wrapperName = removeExtension(pathToProto.toFile().getName());
-
-        this.className = snakeCaseToCamelCase(wrapperName);
+        
+        this.className = snakeCaseToCamelCase(dashToUnderscore(wrapperName));
 
 //        if (parse.packageName() == null)
 //            throw new RuntimeException("package filed in proto file is required for cornerstone");
@@ -118,8 +119,8 @@ class ProtoProcessor implements Runnable
 
         for (final TypeElement t : parse.types())
         {
-            ueProvider.register(t.name(), ueNamedType(className, t));
-            protoProvider.register(t.name(), cppNamedType(t));
+            ueProvider.register(dashToUnderscore(t.name()), ueNamedType(className, t));
+            protoProvider.register(dashToUnderscore(t.name()), cppNamedType(t));
         }
 
         final List<Tuple<CppStruct, CppStruct>> castAssociations = new ArrayList<>();
@@ -332,9 +333,9 @@ class ProtoProcessor implements Runnable
     private CppType ueNamedType(final String serviceName, final TypeElement el)
     {
         if (el instanceof MessageElement)
-            return plain("F" + serviceName + "_" + el.name(), Struct);
+            return plain("F" + serviceName + "_" + dashToUnderscore(el.name()), Struct);
         else if (el instanceof EnumElement)
-            return plain("E" + serviceName + "_" + el.name(), Enum);
+            return plain("E" + serviceName + "_" + dashToUnderscore(el.name()), Enum);
         else
             throw new RuntimeException("Unknown type: '" + el.getClass().getName() + "'");
     }
