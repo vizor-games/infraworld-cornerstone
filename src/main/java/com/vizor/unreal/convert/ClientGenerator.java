@@ -28,6 +28,7 @@ import com.vizor.unreal.tree.CppType;
 import com.vizor.unreal.util.Tuple;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -151,19 +152,32 @@ class ClientGenerator
         final CppArgument statusArg = new CppArgument(plain("FGrpcStatus", Struct), "Status");
 
         return requestsResponses.entrySet().stream()
-            .map(e -> {
+            .flatMap(e -> {
                 final CppArgument responseArg = e.getValue().reduce(($, rsp) -> new CppArgument(rsp.makeRef(), "Response"));
+                final CppType dynamicEventType = plain(eventTypePrefix + e.getKey() + service.name() + "_Dynamic", Struct);
                 final CppType eventType = plain(eventTypePrefix + e.getKey() + service.name(), Struct);
 
-                return Tuple.of(
-                    new CppDelegate(eventType, asList(dispatcherArg, responseArg, statusArg)),
-                    new CppField(eventType, eventPrefix + e.getKey())
-                );
+                ArrayList<Tuple<CppDelegate, CppField>> array = new ArrayList<>();
+                array.add(Tuple.of(
+                    new CppDelegate(dynamicEventType, asList(dispatcherArg, responseArg, statusArg), true),
+                    new CppField(dynamicEventType, eventPrefix + e.getKey() + "Dynamic")
+                ));
+
+                CppField field = new CppField(eventType, eventPrefix + e.getKey());
+                field.enableAnnotations(false);
+                array.add(Tuple.of(
+                    new CppDelegate(eventType, asList(dispatcherArg, responseArg, statusArg), false),
+                    field
+                ));
+                return array.stream();
             })
             .peek(t -> {
-                // should add an UE-specific annotations to these events
-                t.second().addAnnotation(BlueprintAssignable);
-                t.second().addAnnotation(Category, rpcResponsesCategory + service.name());
+                // should add an UE-specific annotations to these events if it's a dynamic event
+                if (t.first().isDynamic())
+                {
+                    t.second().addAnnotation(BlueprintAssignable);
+                    t.second().addAnnotation(Category, rpcResponsesCategory + service.name());
+                }
             })
             .collect(toList());
     }
@@ -206,25 +220,36 @@ class ClientGenerator
             "'{'",
             "    {1} ResponseWithStatus;",
             "    while ({0}.Dequeue(ResponseWithStatus))",
+            "    '{'",
             "        {2}.Broadcast(",
             "            this,",
             "            ResponseWithStatus.Response,",
             "            ResponseWithStatus.Status",
             "        );",
+            "        {3}.Broadcast(",
+            "            this,",
+            "            ResponseWithStatus.Response,",
+            "            ResponseWithStatus.Status",
+            "        );",
+            "    '}'",
             "'}'"
         ));
 
         final StringBuilder sb = new StringBuilder(supressSuperString(updateFunctionName));
         for (int i = 0; i < conduits.size(); i++)
         {
-            final Tuple<CppDelegate, CppField> delegate = delegates.get(i);
+            // Each conduit is "paired" to 2 delegates
+            final Tuple<CppDelegate, CppField> delegate = delegates.get(i * 2);
+            final Tuple<CppDelegate, CppField> delegate2 = delegates.get(i * 2 + 1);
             final CppField conduit = conduits.get(i);
 
             final String dequeue = delegate.reduce((d, f) -> {
-                final List<CppType> genericParams = conduit.getType().getGenericParams();
-                final CppType requestWithContext = genericParams.get(1);
-
-                return format(dequeuePattern, conduit.getName(), requestWithContext.toString(), f.getName());
+                return delegate2.reduce((d2, f2) -> {
+                    final List<CppType> genericParams = conduit.getType().getGenericParams();
+                    final CppType requestWithContext = genericParams.get(1);
+    
+                    return format(dequeuePattern, conduit.getName(), requestWithContext.toString(), f2.getName(), f.getName());
+                });
             });
 
             sb.append(dequeue).append(lineSeparator()).append(lineSeparator());

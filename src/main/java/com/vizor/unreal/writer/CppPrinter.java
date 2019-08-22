@@ -448,7 +448,15 @@ public class CppPrinter implements AutoCloseable
 
     public void visit(final CppDelegate delegate)
     {
-        write("DECLARE_DYNAMIC_MULTICAST_DELEGATE");
+        // First we declare a dynamic event
+        if (delegate.isDynamic())
+        {
+            write("DECLARE_DYNAMIC_MULTICAST_DELEGATE");
+        }
+        else
+        {
+            write("DECLARE_MULTICAST_DELEGATE");
+        }
 
         final String tense = delegate.getTense();
         if (!tense.isEmpty())
@@ -469,8 +477,11 @@ public class CppPrinter implements AutoCloseable
 
             argType.accept(this);
 
-            write(", ");
-            write(a.getName());
+            if (delegate.isDynamic())
+            {
+                write(", ");
+                write(a.getName());
+            }
         }
         write(");");
     }
