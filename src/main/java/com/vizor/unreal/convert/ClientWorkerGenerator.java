@@ -35,6 +35,7 @@ import static com.vizor.unreal.convert.ClientGenerator.contextArg;
 import static com.vizor.unreal.convert.ClientGenerator.initFunctionName;
 import static com.vizor.unreal.convert.ClientGenerator.reqWithCtx;
 import static com.vizor.unreal.convert.ClientGenerator.rspWithSts;
+import static com.vizor.unreal.convert.ClientGenerator.array;
 import static com.vizor.unreal.convert.ClientGenerator.supressSuperString;
 import static com.vizor.unreal.convert.ClientGenerator.updateFunctionName;
 import static com.vizor.unreal.tree.CppRecord.Residence.Cpp;
@@ -85,8 +86,6 @@ class ClientWorkerGenerator
         final List<CppField> cppFields = extractConduits(service);
         final List<CppField> fields = new ArrayList<>(cppFields);
 
-
-
         // 0 - Request Type
         // 1 - Response Type
         // 2 - UE Response Generic Type
@@ -122,17 +121,75 @@ class ClientWorkerGenerator
             "return Result;"
         ));
 
+        final String streamingRpcMethodBody = join(lineSeparator(), asList(
+            "{4}{0} ClientRequest(casts::Proto_Cast<{4}{0}>(Request));",
+            "",
+            "grpc::ClientContext ClientContext;",
+            "casts::CastClientContext(Context, ClientContext);",
+            "",
+            "grpc::CompletionQueue Queue;",
+            "std::unique_ptr<grpc::ClientAsyncReader<{4}{1}>> Rpc(Stub->Async{5}(&ClientContext, ClientRequest, &Queue, (void*)1));",
+            "",
+            "TArray<{3}> ArrayResult;",
+            "",
+            "void* got_tag;",
+            "bool ok = false;",
+            "GPR_ASSERT(Queue.Next(&got_tag, &ok));",
+            "GPR_ASSERT(got_tag == (void*)1);",
+            "GPR_ASSERT(ok);",
+            "",
+            "while (true)",
+            "\'{\'",
+            "    {4}{1} Response;",
+            "    Rpc->Read(&Response, (void*)1);",
+            "",
+            "    void* response_tag;",
+            "    bool response_ok = false;",
+            "    if (Queue.Next(&response_tag, &response_ok))",
+            "    \'{\'",
+            "        GPR_ASSERT(response_tag == (void*)1);",
+            "        if (!response_ok)",
+            "        \'{\'",
+            "            break;",
+            "        \'}\'",
+            "",
+            "        {3} Response_Casted = casts::Proto_Cast<{3}>(Response);",
+            "        ArrayResult.Add(Response_Casted);",
+            "    \'}\'",
+            "\'}\'",
+            "",
+            "grpc::Status Status;",
+            "Rpc->Finish(&Status, (void*)1);",
+            "",
+            "FGrpcStatus GrpcStatus;",
+            "",
+            "casts::CastStatus(Status, GrpcStatus);",
+            "{2} Result(ArrayResult, GrpcStatus);",
+            "",
+            "return Result;"
+        ));
+
         final List<CppFunction> methods = extractFunctions(service);
         for (int i = 0; i < methods.size(); i++)
         {
             final RpcElement rpc = service.rpcs().get(i);
             final CppFunction function = methods.get(i);
 
-            final CppType response = provider.get(rpc.responseType());
-            final CppType responseWithStatus = rspWithSts.makeGeneric(response);
-
-            function.setBody(format(rpcMethodBody, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
-                    response, getPackageNamespaceString(), function.getName()));
+            if (rpc.responseStreaming())
+            {
+                final CppType response = provider.get(rpc.responseType());
+                final CppType responseWithStatus = rspWithSts.makeGeneric(array.makeGeneric(response));
+                function.setBody(format(streamingRpcMethodBody, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
+                        response, getPackageNamespaceString(), function.getName()));
+            }
+            else
+            {
+                final CppType response = provider.get(rpc.responseType());
+                final CppType responseWithStatus = rspWithSts.makeGeneric(response);
+    
+                function.setBody(format(rpcMethodBody, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
+                        response, getPackageNamespaceString(), function.getName()));
+                }
         }
 
         methods.add(createStubInitializer(service, fields));
@@ -229,11 +286,22 @@ class ClientWorkerGenerator
     {
         return service.rpcs().stream()
             .map(rpc -> {
+                CppType compiledGenericConduit;
                 // Extract conduits (bidirectional queues)
-                final CppType compiledGenericConduit = conduitType.makeGeneric(
-                    reqWithCtx.makeGeneric(provider.get(rpc.requestType())),
-                    rspWithSts.makeGeneric(provider.get(rpc.responseType()))
-                );
+                if (rpc.responseStreaming())
+                {
+                    compiledGenericConduit = conduitType.makeGeneric(
+                       reqWithCtx.makeGeneric(provider.get(rpc.requestType())),
+                       rspWithSts.makeGeneric(array.makeGeneric(provider.get(rpc.responseType())))
+                   );
+                }
+                else
+                {
+                    compiledGenericConduit = conduitType.makeGeneric(
+                       reqWithCtx.makeGeneric(provider.get(rpc.requestType())),
+                       rspWithSts.makeGeneric(provider.get(rpc.responseType()))
+                   );
+                }
 
                 final CppField conduit = new CppField(compiledGenericConduit.makePtr(), rpc.name() + conduitName);
                 conduit.enableAnnotations(false);
@@ -251,7 +319,16 @@ class ClientWorkerGenerator
                 final CppType response = provider.get(rpc.responseType());
 
                 final CppArgument requestArg = new CppArgument(request.makeRef().makeConstant(), "Request");
-                final CppType responseType = rspWithSts.makeGeneric(response);
+
+                CppType responseType;
+                if (rpc.responseStreaming())
+                {
+                    responseType = rspWithSts.makeGeneric(array.makeGeneric(response));
+                }
+                else
+                {
+                    responseType = rspWithSts.makeGeneric(response);
+                }
 
                 final CppFunction method = new CppFunction(rpc.name(), responseType, asList(requestArg, contextArg));
 
