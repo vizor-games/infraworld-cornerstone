@@ -200,6 +200,14 @@ class ProtoProcessor implements Runnable
             new CppInclude(Header, className + ".generated.h")
         );
 
+        final List<CppInclude> privateImports = new ArrayList<>();
+        for (final String privateImport : parse.imports())
+            privateImports.add(new CppInclude(Header,snakeCaseToCamelCase(removeExtension(privateImport)) + ".h"));
+
+        final List<CppInclude> publicImports = new ArrayList<>();
+        for (final String privateImport : parse.publicImports())
+            publicImports.add(new CppInclude(Header,snakeCaseToCamelCase(removeExtension(privateImport)) + ".h"));
+
         final Config config = Config.get();
 
         // TODO: Fix paths
@@ -232,6 +240,24 @@ class ProtoProcessor implements Runnable
         try (final CppPrinter p = new CppPrinter(outFilePath, moduleName.toUpperCase()))
         {
             headerIncludes.forEach(i -> i.accept(p));
+            p.newLine();
+
+            p.writeInlineComment("*************** PROTO PRIVATE IMPORTS ***************");
+            p.newLine();
+
+            privateImports.forEach(i -> i.accept(p));
+            p.newLine();
+
+            p.writeInlineComment("*****************************************************");
+            p.newLine();
+
+            p.writeInlineComment("*************** PROTO PUBLIC IMPORTS ****************");
+            p.newLine();
+
+            publicImports.forEach(i -> i.accept(p));
+            p.newLine();
+
+            p.writeInlineComment("*****************************************************");
             p.newLine();
 
             cppIncludes.forEach(i -> i.accept(p));
