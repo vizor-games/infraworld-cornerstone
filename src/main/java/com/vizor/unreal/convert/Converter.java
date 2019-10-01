@@ -18,6 +18,7 @@ package com.vizor.unreal.convert;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.vizor.unreal.config.Config;
 import com.vizor.unreal.preprocess.NestedTypesRemover;
+import com.vizor.unreal.preprocess.PackageTypeRemover;
 import com.vizor.unreal.preprocess.Preprocessor;
 import com.vizor.unreal.util.Tuple;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +26,10 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.squareup.wire.schema.Location.get;
@@ -43,7 +47,8 @@ public class Converter
 
     @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     private static final List<Class<? extends Preprocessor>> preprocessorClasses = asList(
-        NestedTypesRemover.class
+        NestedTypesRemover.class,
+            PackageTypeRemover.class
 
         // Add new ones if you want to...
     );
