@@ -23,20 +23,14 @@ import com.vizor.unreal.preprocess.Preprocessor;
 import com.vizor.unreal.util.Tuple;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.squareup.wire.schema.Location.get;
 import static com.squareup.wire.schema.internal.parser.ProtoParser.parse;
-import static java.lang.String.join;
-import static java.lang.System.lineSeparator;
-import static java.nio.file.Files.readAllLines;
+import static com.vizor.unreal.util.Misc.readFileContent;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.logging.log4j.LogManager.getLogger;
@@ -47,8 +41,8 @@ public class Converter
 
     @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     private static final List<Class<? extends Preprocessor>> preprocessorClasses = asList(
-        NestedTypesRemover.class,
-            PackageTypeRemover.class
+            PackageTypeRemover.class,
+            NestedTypesRemover.class
 
         // Add new ones if you want to...
     );
@@ -76,16 +70,7 @@ public class Converter
 
     private void convert(final Path srcPath, final Path pathToProto, final Path pathToConverted)
     {
-        final String fileContent;
-        try
-        {
-            log.debug("Parsing {}", pathToProto);
-            fileContent = join(lineSeparator(), readAllLines(pathToProto));
-        }
-        catch (IOException ex)
-        {
-            throw new RuntimeException(ex);
-        }
+        final String fileContent = readFileContent(pathToProto);
 
         final List<ProtoFileElement> elements = preProcess(parse(get(pathToProto.toString()), fileContent));
         log.debug("Done parsing {}", pathToProto);

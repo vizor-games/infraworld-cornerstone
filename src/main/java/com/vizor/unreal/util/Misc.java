@@ -32,6 +32,9 @@ import static java.lang.Character.isUpperCase;
 import static java.lang.Character.isWhitespace;
 import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
+import static java.lang.String.join;
+import static java.lang.System.lineSeparator;
+import static java.nio.file.Files.readAllLines;
 import static java.nio.file.Files.walk;
 import static java.nio.file.Paths.get;
 import static java.util.Arrays.stream;
@@ -420,6 +423,20 @@ public class Misc
         catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String readFileContent(final Path file)
+    {
+        final String fileContent;
+        try
+        {
+            fileContent = join(lineSeparator(), readAllLines(file));
+        }
+        catch (IOException ioe)
+        {
+            throw new RuntimeException(ioe);
+        }
+        return fileContent;
     }
 
     /**
