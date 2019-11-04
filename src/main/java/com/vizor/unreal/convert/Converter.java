@@ -15,6 +15,7 @@
  */
 package com.vizor.unreal.convert;
 
+import com.google.common.collect.ImmutableList;
 import com.squareup.wire.schema.internal.parser.MessageElement;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.vizor.unreal.config.Config;
@@ -27,16 +28,14 @@ import com.vizor.unreal.util.ImportsResolver;
 import com.vizor.unreal.util.Tuple;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.squareup.wire.schema.Location.get;
 import static com.squareup.wire.schema.internal.parser.ProtoParser.parse;
-import static com.vizor.unreal.util.Misc.readFileContent;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.logging.log4j.LogManager.getLogger;
@@ -69,12 +68,6 @@ public class Converter
 
         final ParseResult parseResult = new ParseResult(protoFiles);
 
-        ImportsResolver importsResolver = new ImportsResolver(parseResult);
-        final List<ProtoFileElement> orderedList = importsResolver.resolveImports();
-
-        final Linker linker = new Linker(parseResult);
-        linker.resolveSymbols();
-
 
         Stream<Tuple<Path, Path>> pathStream = paths.stream();
 
@@ -82,26 +75,48 @@ public class Converter
         if (!Config.get().isNoFork())
             pathStream = pathStream.parallel();
 
-        pathStream.forEach(t -> {
-            log.info("Converting {}", t.first());
-            convert(srcPath, t.first(), t.second());
+        parseResult.getElements().stream().forEach(protoFileElement -> {
+            convert(srcPath, protoFileElement, srcPath);
         });
+
+
     }
 
-    private void convert(final Path srcPath, final Path pathToProto, final Path pathToConverted)
+    private void convert(final Path srcPath, final ProtoFileElement parse, final Path pathToConverted)
     {
-        final String fileContent = readFileContent(pathToProto);
+        final ImmutableList<String> publicImports = parse.publicImports();
+        final ImmutableList<String> privateImports = parse.imports();
 
-        final List<ProtoFileElement> elements = preProcess(parse(get(pathToProto.toString()), fileContent));
-        log.debug("Done parsing {}", pathToProto);
-        log.debug("Processing {}", pathToProto);
+        final ArrayList<String> allImports = new ArrayList<>();
+        allImports.addAll(publicImports);
+        allImports.addAll(privateImports);
+
+        parse.services().forEach(serviceElement -> {
+            serviceElement.rpcs().forEach(rpcElement -> {
+                final String requestType = rpcElement.requestType();
+                final String responseType = rpcElement.responseType();
+
+                if(requestType.contains("."))
+                {
+                    final String[] split = requestType.split(".");
+                    final String packageName = split[0];
+                    final String importedSymbol = split[1];
+
+
+                }
+            });
+        });
+
+        final List<ProtoFileElement> elements = preProcess(parse);
+        log.debug("Done parsing {}", parse.location());
+        log.debug("Processing {}", parse.location());
 
         elements.forEach(e -> {
-            final Path relativePath = srcPath.relativize(pathToProto);
+            final Path relativePath = srcPath.relativize(new File(parse.location().toString()).toPath());
             new ProtoProcessor(e, relativePath, pathToConverted, moduleName).run();
         });
 
-        log.debug("Done processing {}", pathToProto);
+        //log.debug("Done processing {}", pathToProto);
     }
 
     private List<ProtoFileElement> preProcess(ProtoFileElement element)

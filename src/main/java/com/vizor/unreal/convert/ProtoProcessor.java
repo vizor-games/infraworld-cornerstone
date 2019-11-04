@@ -15,6 +15,7 @@
  */
 package com.vizor.unreal.convert;
 
+import com.google.common.collect.ImmutableList;
 import com.squareup.wire.schema.internal.parser.EnumConstantElement;
 import com.squareup.wire.schema.internal.parser.EnumElement;
 import com.squareup.wire.schema.internal.parser.FieldElement;
@@ -75,7 +76,7 @@ class ProtoProcessor implements Runnable
 {
     private static final Logger log = getLogger(ProtoProcessor.class);
 
-    private final ProtoFileElement parse;
+    private ProtoFileElement parse;
     private final Path pathToProto;
     private final Path pathToConverted;
     private final String moduleName;
@@ -103,9 +104,6 @@ class ProtoProcessor implements Runnable
         this.wrapperName = removeExtension(pathToProto.toFile().getName());
 
         this.className = snakeCaseToCamelCase(wrapperName);
-
-//        if (parse.packageName() == null)
-//            throw new RuntimeException("package filed in proto file is required for cornerstone");
 
         this.packageNamespace = new CppNamespace(parse.packageName());
     }
@@ -200,14 +198,6 @@ class ProtoProcessor implements Runnable
             new CppInclude(Header, className + ".generated.h")
         );
 
-        final List<CppInclude> privateImports = new ArrayList<>();
-        for (final String privateImport : parse.imports())
-            privateImports.add(new CppInclude(Header,snakeCaseToCamelCase(removeExtension(privateImport)) + ".h"));
-
-        final List<CppInclude> publicImports = new ArrayList<>();
-        for (final String privateImport : parse.publicImports())
-            publicImports.add(new CppInclude(Header,snakeCaseToCamelCase(removeExtension(privateImport)) + ".h"));
-
         final Config config = Config.get();
 
         // TODO: Fix paths
@@ -242,23 +232,23 @@ class ProtoProcessor implements Runnable
             headerIncludes.forEach(i -> i.accept(p));
             p.newLine();
 
-            p.writeInlineComment("*************** PROTO PRIVATE IMPORTS ***************");
-            p.newLine();
-
-            privateImports.forEach(i -> i.accept(p));
-            p.newLine();
-
-            p.writeInlineComment("*****************************************************");
-            p.newLine();
-
-            p.writeInlineComment("*************** PROTO PUBLIC IMPORTS ****************");
-            p.newLine();
-
-            publicImports.forEach(i -> i.accept(p));
-            p.newLine();
-
-            p.writeInlineComment("*****************************************************");
-            p.newLine();
+//            p.writeInlineComment("*************** PROTO PRIVATE IMPORTS ***************");
+//            p.newLine();
+//
+//            privateImports.forEach(i -> i.accept(p));
+//            p.newLine();
+//
+//            p.writeInlineComment("*****************************************************");
+//            p.newLine();
+//
+//            p.writeInlineComment("*************** PROTO PUBLIC IMPORTS ****************");
+//            p.newLine();
+//
+//            publicImports.forEach(i -> i.accept(p));
+//            p.newLine();
+//
+//            p.writeInlineComment("*****************************************************");
+//            p.newLine();
 
             cppIncludes.forEach(i -> i.accept(p));
             p.newLine();
