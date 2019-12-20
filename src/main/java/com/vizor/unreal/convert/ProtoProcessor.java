@@ -211,7 +211,7 @@ class ProtoProcessor implements Runnable
             new CppInclude(Cpp, className + ".h"),
             new CppInclude(Cpp, "RpcClientWorker.h"),
             new CppInclude(Cpp, "CastUtils.h"),
-
+            new CppInclude(Cpp, "WorkerUtils.h"),
             new CppInclude(Cpp, "GrpcIncludesBegin.h"),
 
             new CppInclude(Cpp, "grpc/support/log.h", true),
