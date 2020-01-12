@@ -10,7 +10,7 @@ src_path: 'Infraworld/protos'
 
 #
 # A path, where generated UE C++ public classes should be placed.
-dst_public_path: Infraworld/Plugins/GrpcClient/Source/GrpcClient/Public/'
+dst_public_path: 'Infraworld/Plugins/GrpcClient/Source/GrpcClient/Public/'
 
 #
 # A path, where generated UE C++ private classes should be placed.
