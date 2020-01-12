@@ -43,7 +43,7 @@ class CastGenerator
     private static final String typeCastHint = "// {0}::{1} <- {2}::{3}" + lineSeparator();
     private static final String dataTypeHint = "// {0} ({1}) <- {2} ({3})" + lineSeparator();
 
-    private static final String inputItemName = "Item";
+    private static final String inputItemName = "InItem";
     private static final String outputItemName = "OutItem";
 
     private static final Logger log = LogManager.getLogger(CastGenerator.class);

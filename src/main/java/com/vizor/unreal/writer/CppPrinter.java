@@ -438,7 +438,7 @@ public class CppPrinter implements AutoCloseable
 
         writeLine("{").incTab();
         namespace.getResidents().forEach(r -> r.accept(this));
-        removeLine();
+        // removeLine();
         decTab().write("}").writeInlineComment("end namespace '" + name + "'");
 
 

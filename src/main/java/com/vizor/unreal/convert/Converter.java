@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.squareup.wire.schema.Location.get;
@@ -63,10 +64,37 @@ public class Converter
         if (!Config.get().isNoFork())
             pathStream = pathStream.parallel();
 
-        pathStream.forEach(t -> {
-            log.info("Converting {}", t.first());
-            convert(srcPath, t.first(), t.second());
-        });
+
+
+			try {
+				List<ProtoFileElement> protos = new ArrayList<>();
+				List<ProtoProcessorArgs> args = new ArrayList<>();
+for (Tuple<Path, Path> pathPair : paths) {
+	final Path pathToProto = pathPair.first();
+	final Path pathToConverted = pathPair.second();
+	final String fileContent = join(lineSeparator(), readAllLines(pathPair.first()));
+	args.addAll(preProcess(parse(get(pathPair.first().toString()), fileContent)).stream().map(protoFile -> {
+		
+		final Path relativePath = srcPath.relativize(pathToProto); 
+		return new ProtoProcessorArgs(protoFile, relativePath, pathToConverted, moduleName);
+	}).collect(Collectors.toList()));
+}
+args.forEach(arg -> {
+	
+log.info("Converting {}", arg.pathToProto);
+	
+	new ProtoProcessor(arg, args).run();});
+				
+		// pathStream.flatMap(t ->
+		// ).collect(Collectors.toList());
+
+        // pathStream.forEach(t -> {
+        //     log.info("Converting {}", t.first());
+        //     convert(srcPath, t.first(), t.second());
+		// });
+	}
+	catch (IOException ex)
+	{}
     }
 
     private void convert(final Path srcPath, final Path pathToProto, final Path pathToConverted)
@@ -86,9 +114,13 @@ public class Converter
         log.debug("Done parsing {}", pathToProto);
         log.debug("Processing {}", pathToProto);
 
-        elements.forEach(e -> {
-            final Path relativePath = srcPath.relativize(pathToProto);
-            new ProtoProcessor(e, relativePath, pathToConverted, moduleName).run();
+		List<ProtoProcessorArgs> allElementArgs = elements.stream().map(e -> {
+			final Path relativePath = srcPath.relativize(pathToProto); 
+			return new ProtoProcessorArgs(e, relativePath, pathToConverted, moduleName);
+		}).collect(Collectors.toList());
+
+		allElementArgs.forEach(e -> {
+			new ProtoProcessor(e, allElementArgs).run();
         });
 
         log.debug("Done processing {}", pathToProto);
