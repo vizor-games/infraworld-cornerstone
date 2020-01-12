@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.vizor.unreal.util.Misc.splitGeneric;
 import static java.text.MessageFormat.format;
@@ -34,7 +35,7 @@ import static java.util.stream.Collectors.toList;
 
 public abstract class TypesProvider
 {
-    private static final Pattern typePattern = compile("^([A-Za-z][A-Za-z0-9_]+)(<(.+)>)?$");
+    private static final Pattern typePattern = compile("^([A-Za-z][A-Za-z0-9_.]+)(<(.+)>)?$");
 
     private final Map<String, CppType> types = new HashMap<>();
     private final Map<String, CppType> compiledGenerics = new HashMap<>();
@@ -93,9 +94,40 @@ public abstract class TypesProvider
                     "doesn't have a native mapping for " + clazz.getSimpleName()));
     }
 
+	private CppType getBestType(final String typeName)
+	{
+		{
+			final CppType foundType = types.get(typeName);
+
+			if (!isNull(foundType))
+			{
+				return foundType;
+			}
+		}
+
+		final Pattern typePattern = compile("^(.*\\.)?" + typeName);
+
+		List<Map.Entry<String, CppType>> possibleTypeEntries = types.entrySet()
+			.stream()
+			.filter(entry->typePattern.matcher(entry.getKey()).matches())
+			.collect(Collectors.toList());
+
+		if (possibleTypeEntries.size() > 1)
+		{
+			throw new RuntimeException(format("Cannot determine best possible type for {} out of {} options", typeName, possibleTypeEntries.size()));
+		}
+
+		if (possibleTypeEntries.size() == 0)
+		{
+			return null;
+		}
+
+		return possibleTypeEntries.get(0).getValue();
+	}
+
     private CppType getPlainType(final String typeName)
     {
-        final CppType foundType = types.get(typeName);
+		final CppType foundType = getBestType(typeName);
         if (isNull(foundType))
             throw new RuntimeException("Can't get a corresponding C++ type for " + typeName);
 

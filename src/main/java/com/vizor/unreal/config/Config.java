@@ -56,6 +56,7 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.apache.logging.log4j.LogManager.getRootLogger;
 
+
 @SuppressWarnings("unused")
 public final class Config
 {
@@ -72,7 +73,10 @@ public final class Config
     private String srcPath;
 
     @ConfigField
-    private String dstPath;
+    private String dstPublicPath;
+
+    @ConfigField
+    private String dstPrivatePath;
 
     @ConfigField
     private String moduleName;
@@ -103,14 +107,24 @@ public final class Config
         this.srcPath = srcPath;
     }
 
-    public final String getDstPath()
+    public final String getDstPublicPath()
     {
-        return dstPath;
+        return dstPublicPath;
     }
 
-    public void setDstPath(String dstPath)
+    public void setDstPublicPath(String dstPath)
     {
-        this.dstPath = dstPath;
+        this.dstPublicPath = dstPath;
+    }
+
+    public final String getDstPrivatePath()
+    {
+        return dstPrivatePath;
+    }
+
+    public void setDstPrivatePath(String dstPath)
+    {
+        this.dstPrivatePath = dstPath;
     }
 
     public final String getModuleName()
@@ -280,7 +294,8 @@ public final class Config
     public final void validate()
     {
         checkString(srcPath, "srcPath must not be null or empty");
-        checkString(dstPath, "dstPath must not be null or empty");
+        checkString(dstPublicPath, "dstPublicPath must not be null or empty");
+        checkString(dstPrivatePath, "dstPrivatePath must not be null or empty");
 
         for (int i = 0; i < moduleName.length(); i++)
         {
@@ -371,4 +386,8 @@ public final class Config
             }
         }
     }
+
+	public DestinationConfig getDstPath() {
+		return new DestinationConfig(Paths.get(dstPublicPath), Paths.get(dstPrivatePath));
+	}
 }

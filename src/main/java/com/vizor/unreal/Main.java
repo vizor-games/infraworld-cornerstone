@@ -16,6 +16,7 @@
 package com.vizor.unreal;
 
 import com.vizor.unreal.config.Config;
+import com.vizor.unreal.config.DestinationConfig;
 import com.vizor.unreal.convert.Converter;
 import com.vizor.unreal.util.CliHandler;
 import com.vizor.unreal.util.CliHandler.Parse;
@@ -34,6 +35,8 @@ import static java.lang.System.nanoTime;
 import static java.nio.file.Paths.get;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.apache.logging.log4j.core.config.Configurator.setLevel;
+
+
 
 public class Main
 {
@@ -71,15 +74,18 @@ public class Main
         }
 
         final Path srcPath = get(config.getSrcPath());
-        final Path dstPath = get(config.getDstPath());
+        final DestinationConfig dstPath = config.getDstPath();
 
         final Converter converter = new Converter(config.getModuleName());
 
         if (!srcPath.toFile().isDirectory())
             throw new IllegalArgumentException("Source folder '" + srcPath + "' does not exist, or isn't a directory");
 
-        if (!dstPath.toFile().isDirectory())
-            throw new IllegalArgumentException("Destination folder '" + dstPath + "' does not exist, or isn't a directory");
+        if (!dstPath.pathPublic.toFile().isDirectory())
+            throw new IllegalArgumentException("Destination Public folder '" + dstPath.pathPublic + "' does not exist, or isn't a directory");
+
+		if (!dstPath.pathPrivate.toFile().isDirectory())
+			throw new IllegalArgumentException("Destination Private folder '" + dstPath.pathPrivate + "' does not exist, or isn't a directory");
 
         log.info("Running cornerstone...");
         log.info("Logging level: {}", log.getLevel().toString());
@@ -102,11 +108,11 @@ public class Main
         launchSingle(srcPath, dstPath, converter);
     }
 
-    private static void launchSingle(final Path srcPath, final Path dstPath, final Converter converter)
+    private static void launchSingle(final Path srcPath, final DestinationConfig dstPath, final Converter converter)
     {
         final long start = nanoTime();
 
-        final List<Tuple<Path, Path>> paths = findFilesRecursively(srcPath, dstPath, "proto");
+        final List<Tuple<Path, DestinationConfig>> paths = findFilesRecursively(srcPath, dstPath, "proto");
 
         // Display how many proto file(s) pending processed
         log.info("Running converter, {} proto-files pending processed.", paths.size());
