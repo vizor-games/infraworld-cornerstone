@@ -241,7 +241,6 @@ class ProtoProcessor implements Runnable
 
 		headerIncludes.addAll(GatherImportedProtos(args, otherProcessorArgs).map(
 			importedProto -> {
-				
 				final String pathToImportedProtoStr = removeExtension(importedProto.pathToProto.toString());
 				final String importedHeaderPath = join(separator, importedProto.pathToConverted.toString(), pathToImportedProtoStr, importedProto.className + ".h");
 				return new CppInclude(Header, importedHeaderPath);
@@ -259,7 +258,9 @@ class ProtoProcessor implements Runnable
 
         // TODO: Fix paths
         final String generatedIncludeName = join("/", config.getWrappersPath(),
-                removeExtension(pathToProtoStr), args.wrapperName);
+                /*removeExtension(pathToProtoStr),*/ args.wrapperName);
+
+		final String castIncludeName = args.className + "Casts.h";
 
         // code. mutable to allow
         final List<CppRecord> cppIncludes = new ArrayList<>(asList(
@@ -276,13 +277,43 @@ class ProtoProcessor implements Runnable
             new CppInclude(Cpp, generatedIncludeName + ".grpc.pb.hpp", false),
             new CppInclude(Cpp, "ChannelProvider.h", false),
 
-            new CppInclude(Cpp, "GrpcIncludesEnd.h")
-        ));
+			new CppInclude(Cpp, "GrpcIncludesEnd.h"),
+			new CppInclude(Cpp, castIncludeName)
+		));
+		
+		final List<CppRecord> castsIncludes = new ArrayList<>(asList(
+            // new CppInclude(Header, "GrpcIncludesBegin.h"),
+
+            // new CppInclude(Header, generatedIncludeName + ".pb.hpp", false),
+            // new CppInclude(Header, generatedIncludeName + ".grpc.pb.hpp", false),
+
+			// new CppInclude(Header, "GrpcIncludesEnd.h"),
+
+			new CppInclude(Header, args.className + ".h")
+		));
+
+		castsIncludes.addAll(GatherImportedProtos(args, otherProcessorArgs).map(
+			importedProto -> {
+				final String pathToImportedProtoStr = removeExtension(importedProto.pathToProto.toString());
+				final String importedCastsPath = join(separator, pathToImportedProtoStr, importedProto.className + "Casts" + ".h");
+				return new CppInclude(Header, importedCastsPath);
+			}
+		).collect(Collectors.toList()));
 
         if (!stringIsNullOrEmpty(config.getPrecompiledHeader()))
             cppIncludes.add(0, new CppInclude(Cpp, config.getPrecompiledHeader(), false));
 
         final Path outFilePath = get(outDirPath, args.className);
+		final Path outCastsFilePath = get(outDirPath, args.className + "Casts");
+		
+        try (final CppPrinter castsPrinter = new CppPrinter(outCastsFilePath, args.moduleName.toUpperCase()))
+		{
+			castsIncludes.forEach(i -> i.accept(castsPrinter));
+			castsPrinter.newLine();
+	
+            // Write casts to the CPP file
+			casts.accept(castsPrinter).newLine();
+		}
 
         try (final CppPrinter p = new CppPrinter(outFilePath, args.moduleName.toUpperCase()))
         {
@@ -308,7 +339,7 @@ class ProtoProcessor implements Runnable
             p.newLine();
 
             // Write casts to the CPP file
-            casts.accept(p).newLine();
+            // casts.accept(p).newLine();
 
             // Workers are being written to the *.cpp file, have to write them before
             workers.forEach(c -> c.accept(p).newLine());

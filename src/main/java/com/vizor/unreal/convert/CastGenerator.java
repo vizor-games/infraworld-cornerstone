@@ -21,6 +21,7 @@ import com.vizor.unreal.tree.CppFunction;
 import com.vizor.unreal.tree.CppNamespace;
 import com.vizor.unreal.tree.CppStruct;
 import com.vizor.unreal.tree.CppType;
+import com.vizor.unreal.tree.CppRecord.Residence;
 import com.vizor.unreal.util.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +29,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import static com.vizor.unreal.tree.CppRecord.Residence.Cpp;
+import static com.vizor.unreal.tree.CppRecord.Residence.Header;
 import static com.vizor.unreal.tree.CppType.Kind.Enum;
 import static com.vizor.unreal.tree.CppType.Kind.Struct;
 import static java.lang.System.lineSeparator;
@@ -89,7 +90,7 @@ class CastGenerator
             ns.add(generateCast(ueStruct, cppStruct, this::generateUeToProtoCast));
         });
 
-        ns.setResidence(Cpp);
+        ns.setResidence(Header);
         return ns;
     }
 
