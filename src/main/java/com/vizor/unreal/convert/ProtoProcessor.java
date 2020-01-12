@@ -275,8 +275,9 @@ class ProtoProcessor implements Runnable
         final List<CppRecord> cppIncludes = new ArrayList<>(asList(
             new CppInclude(Cpp, args.className + ".h"),
             new CppInclude(Cpp, "RpcClientWorker.h"),
+            new CppInclude(Cpp, "WorkerUtils.h"),
 
-            new CppInclude(Cpp, "GrpcIncludesBegin.h"),
+			new CppInclude(Cpp, "GrpcIncludesBegin.h"),
 
             new CppInclude(Cpp, "grpc/support/log.h", true),
             new CppInclude(Cpp, "grpc++/channel.h", true),
