@@ -436,15 +436,15 @@ public class Misc
                 .filter(Files::isRegularFile)
                 .filter(p -> endsWithIgnoreCase.test(p.toString()))
                 .map(p -> { 
-					final Path relativeSourceFilePath = src.relativize(p.getParent());
+                    final Path relativeSourceFilePath = src.relativize(p.getParent());
 
-					final DestinationConfig relativeDestinationConfig = new DestinationConfig(
-						get(dst.pathPublic.toString(), relativeSourceFilePath.toString()),
-						get(dst.pathPrivate.toString(), relativeSourceFilePath.toString())
-					);
+                    final DestinationConfig relativeDestinationConfig = new DestinationConfig(
+                        get(dst.pathPublic.toString(), relativeSourceFilePath.toString()),
+                        get(dst.pathPrivate.toString(), relativeSourceFilePath.toString())
+                    );
 
-					return Tuple.of(p, relativeDestinationConfig);
-				})
+                    return Tuple.of(p, relativeDestinationConfig);
+                })
                 .collect(toList());
         }
         catch (IOException e) {

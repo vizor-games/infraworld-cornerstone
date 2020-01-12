@@ -52,11 +52,11 @@ import static java.util.Objects.requireNonNull;
 @SuppressWarnings("UnusedReturnValue")
 public class CppPrinter implements AutoCloseable
 {
-	public enum HeaderType
-	{
-		Public,
-		Private
-	}
+    public enum HeaderType
+    {
+        Public,
+        Private
+    }
 
     private static final Supplier<Collection<String>> fileHeader = () -> asList(
         "",
@@ -79,13 +79,13 @@ public class CppPrinter implements AutoCloseable
     private ContentWriter current = header;
 
     private final DestinationConfig absPathToFile;
-	private final DummyDecoratorWriter decoratorWriter;
+    private final DummyDecoratorWriter decoratorWriter;
 
-	private final HeaderType headerType;
+    private final HeaderType headerType;
 
-	public CppPrinter(DestinationConfig absPathToFile, String apiName, HeaderType headerType) 
-	{
-		this.headerType = headerType;
+    public CppPrinter(DestinationConfig absPathToFile, String apiName, HeaderType headerType) 
+    {
+        this.headerType = headerType;
 
         this.absPathToFile = absPathToFile;
         this.decoratorWriter = new UEDecoratorWriter(apiName);
@@ -102,11 +102,11 @@ public class CppPrinter implements AutoCloseable
         // Switch to header, and write include guard
         pragmaOnce.accept(this);
         newLine();
-	}
+    }
 
-	public CppPrinter(DestinationConfig absPathToFile, String apiName)
-	{
-		this(absPathToFile, apiName, HeaderType.Public);
+    public CppPrinter(DestinationConfig absPathToFile, String apiName)
+    {
+        this(absPathToFile, apiName, HeaderType.Public);
     }
 
     @Override

@@ -84,8 +84,8 @@ public class Main
         if (!dstPath.pathPublic.toFile().isDirectory())
             throw new IllegalArgumentException("Destination Public folder '" + dstPath.pathPublic + "' does not exist, or isn't a directory");
 
-		if (!dstPath.pathPrivate.toFile().isDirectory())
-			throw new IllegalArgumentException("Destination Private folder '" + dstPath.pathPrivate + "' does not exist, or isn't a directory");
+        if (!dstPath.pathPrivate.toFile().isDirectory())
+            throw new IllegalArgumentException("Destination Private folder '" + dstPath.pathPrivate + "' does not exist, or isn't a directory");
 
         log.info("Running cornerstone...");
         log.info("Logging level: {}", log.getLevel().toString());

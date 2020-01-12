@@ -387,7 +387,7 @@ public final class Config
         }
     }
 
-	public DestinationConfig getDstPath() {
-		return new DestinationConfig(Paths.get(dstPublicPath), Paths.get(dstPrivatePath));
-	}
+    public DestinationConfig getDstPath() {
+        return new DestinationConfig(Paths.get(dstPublicPath), Paths.get(dstPrivatePath));
+    }
 }

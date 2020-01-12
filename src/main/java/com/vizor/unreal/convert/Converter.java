@@ -60,55 +60,55 @@ public class Converter
 
     public void convert(final Path srcPath, final List<Tuple<Path, DestinationConfig>> paths)
     {
-		List<ProtoProcessorArgs> args = new ArrayList<>();
+        List<ProtoProcessorArgs> args = new ArrayList<>();
 
-		Stream<Tuple<Path, DestinationConfig>> pathsStream = paths.stream();
+        Stream<Tuple<Path, DestinationConfig>> pathsStream = paths.stream();
 
-		if (!Config.get().isNoFork())
-		{
-			pathsStream = pathsStream.parallel();
-		}
+        if (!Config.get().isNoFork())
+        {
+            pathsStream = pathsStream.parallel();
+        }
 
-		pathsStream.forEach(pathPair -> {
-			final Path pathToProto = pathPair.first();
-			final DestinationConfig pathToConverted = pathPair.second();
-			
-			String fileContent = null;
-			
-			try 
-			{
-				fileContent = join(lineSeparator(), readAllLines(pathPair.first()));
-			}
-			catch (IOException ex)
-			{
-				throw new RuntimeException(ex);
-			}
+        pathsStream.forEach(pathPair -> {
+            final Path pathToProto = pathPair.first();
+            final DestinationConfig pathToConverted = pathPair.second();
+            
+            String fileContent = null;
+            
+            try 
+            {
+                fileContent = join(lineSeparator(), readAllLines(pathPair.first()));
+            }
+            catch (IOException ex)
+            {
+                throw new RuntimeException(ex);
+            }
 
-			final List<ProtoProcessorArgs> protoArgs = preProcess(parse(get(pathToProto.toString()), fileContent))
-				.stream()
-				.map(
-					protoFile -> 
-					{
-						final Path relativePath = srcPath.relativize(pathToProto); 
-						return new ProtoProcessorArgs(protoFile, relativePath, pathToConverted, moduleName);
-					})
-				.collect(Collectors.toList());
+            final List<ProtoProcessorArgs> protoArgs = preProcess(parse(get(pathToProto.toString()), fileContent))
+                .stream()
+                .map(
+                    protoFile -> 
+                    {
+                        final Path relativePath = srcPath.relativize(pathToProto); 
+                        return new ProtoProcessorArgs(protoFile, relativePath, pathToConverted, moduleName);
+                    })
+                .collect(Collectors.toList());
 
-			args.addAll(protoArgs);
-		});
+            args.addAll(protoArgs);
+        });
 
-		Stream<ProtoProcessorArgs> argsStream = args.stream();
+        Stream<ProtoProcessorArgs> argsStream = args.stream();
 
-		if (!Config.get().isNoFork())
-		{
-			argsStream = argsStream.parallel();
-		}
+        if (!Config.get().isNoFork())
+        {
+            argsStream = argsStream.parallel();
+        }
 
-		argsStream.forEach(arg -> {
-			log.info("Converting {}", arg.pathToProto);
-			new ProtoProcessor(arg, args).run();
-		});
-	}
+        argsStream.forEach(arg -> {
+            log.info("Converting {}", arg.pathToProto);
+            new ProtoProcessor(arg, args).run();
+        });
+    }
 
     private List<ProtoFileElement> preProcess(ProtoFileElement element)
     {
