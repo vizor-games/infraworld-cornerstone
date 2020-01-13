@@ -163,7 +163,7 @@ class CastGenerator
                         " type, the number of args should be 2, not: " + params.size());
             }
 
-            final String castPattern =  outputItemName + ".{0} = " + castMethod.getMethodName() + "<{1}>(Item.{2}());";
+            final String castPattern =  outputItemName + ".{0} = " + castMethod.getMethodName() + "<{1}>(" + inputItemName + ".{2}());";
             return format(castPattern, outField.getName(), params.stream().map(CppType::toString).collect(joining(", ")),
                     inField.getName());
         }
