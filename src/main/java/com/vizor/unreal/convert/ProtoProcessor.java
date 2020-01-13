@@ -229,7 +229,7 @@ class ProtoProcessor implements Runnable
         }
 
         final String pathToProtoStr = removeExtension(args.pathToProto.toString());
-        DestinationConfig dstPath = args.pathToConverted.append(Path.of(pathToProtoStr));
+        DestinationConfig dstPath = args.pathToConverted.append(pathToProtoStr);
 
         // Should create an output directories if does not exit.
         @SuppressWarnings("unused")

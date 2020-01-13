@@ -19,7 +19,7 @@ public final class DestinationConfig
     }
 
     public DestinationConfig append(String childPathString) {
-        return append(Path.of(childPathString));
+        return append(get(childPathString));
     }
 
     public Path pathPublic;

@@ -64,11 +64,6 @@ public class Converter
 
         Stream<Tuple<Path, DestinationConfig>> pathsStream = paths.stream();
 
-        if (!Config.get().isNoFork())
-        {
-            pathsStream = pathsStream.parallel();
-        }
-
         pathsStream.forEach(pathPair -> {
             final Path pathToProto = pathPair.first();
             final DestinationConfig pathToConverted = pathPair.second();
