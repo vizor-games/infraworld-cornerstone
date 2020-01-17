@@ -130,14 +130,16 @@ class ProtoProcessor implements Runnable
     private Stream<ProtoProcessorArgs> GatherImportedProtos(final ProtoProcessorArgs proto, final List<ProtoProcessorArgs> otherProtos)
     {
         return otherProtos.stream()
-            .filter(otherProto -> proto.parse.imports().contains(otherProto.pathToProto.toString()));
+            .filter(otherProto -> proto.parse.imports().stream().map(importPathString -> get(importPathString)).anyMatch(importPath -> importPath.equals(otherProto.pathToProto)));
     }
 
     private Stream<ProtoProcessorArgs> GatherImportedProtosDeep(final ProtoProcessorArgs proto, final List<ProtoProcessorArgs> otherProtos)
     {
-        final Stream<ProtoProcessorArgs> importedProtos = GatherImportedProtos(proto, otherProtos);
+		final Stream<ProtoProcessorArgs> importedProtos = GatherImportedProtos(proto, otherProtos);
+		
+		final List<ProtoProcessorArgs> argss = importedProtos.collect(Collectors.toList());
 
-        return Stream.concat(Stream.of(proto), importedProtos.flatMap(importedProto->GatherImportedProtosDeep(importedProto, otherProtos)));
+        return Stream.concat(Stream.of(proto), argss.stream().flatMap(importedProto->GatherImportedProtosDeep(importedProto, otherProtos)));
     }
 
     private void GatherTypes(final ProtoProcessorArgs proto, final List<ProtoProcessorArgs> otherProtos, TypesProvider ueProvider, TypesProvider protoProvider)
