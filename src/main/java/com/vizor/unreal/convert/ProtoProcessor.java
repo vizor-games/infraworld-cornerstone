@@ -231,7 +231,7 @@ class ProtoProcessor implements Runnable
         }
 
         final String pathToProtoStr = removeExtension(args.pathToProto.toString());
-        DestinationConfig dstPath = args.pathToConverted.append(pathToProtoStr);
+        DestinationConfig dstPath = Config.get().getDstPath().append(pathToProtoStr);
 
         // Should create an output directories if does not exit.
         @SuppressWarnings("unused")
@@ -250,7 +250,9 @@ class ProtoProcessor implements Runnable
         
         final List<String> importedProtoNames = GatherImportedProtos(args, otherProcessorArgs).map(
             importedProto -> {
-                final String pathToImportedProtoStr = removeExtension(importedProto.pathToProto.toString());
+				// remove extension and fix slashes up
+				final String pathToImportedProtoStr = removeExtension(importedProto.pathToProto.toString()).replace("\\", pathSeparator);
+				
                 final String importedHeaderPath = join(pathSeparator, pathToImportedProtoStr, importedProto.className);
                 return importedHeaderPath;
             }
@@ -269,7 +271,7 @@ class ProtoProcessor implements Runnable
 
         // TODO: Fix paths
         final String generatedIncludeName = join("/", config.getWrappersPath(),
-                /*removeExtension(pathToProtoStr),*/ args.wrapperName);
+                removeExtension(pathToProtoStr)).replace("\\", pathSeparator);//, args.wrapperName);
 
         final String castIncludeName = args.className + "Casts.h";
 

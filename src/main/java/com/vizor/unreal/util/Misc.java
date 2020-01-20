@@ -438,10 +438,8 @@ public class Misc
                 .map(p -> { 
                     final Path relativeSourceFilePath = src.relativize(p.getParent());
 
-                    final DestinationConfig relativeDestinationConfig = new DestinationConfig(
-                        get(dst.pathPublic.toString(), relativeSourceFilePath.toString()),
-                        get(dst.pathPrivate.toString(), relativeSourceFilePath.toString())
-                    );
+					final DestinationConfig relativeDestinationConfig = 
+						dst.append(relativeSourceFilePath);
 
                     return Tuple.of(p, relativeDestinationConfig);
                 })
