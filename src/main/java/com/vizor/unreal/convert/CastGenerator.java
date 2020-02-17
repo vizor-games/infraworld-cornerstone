@@ -21,6 +21,7 @@ import com.vizor.unreal.tree.CppFunction;
 import com.vizor.unreal.tree.CppNamespace;
 import com.vizor.unreal.tree.CppStruct;
 import com.vizor.unreal.tree.CppType;
+import com.vizor.unreal.tree.CppRecord.Residence;
 import com.vizor.unreal.util.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +29,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import static com.vizor.unreal.tree.CppRecord.Residence.Cpp;
+import static com.vizor.unreal.tree.CppRecord.Residence.Header;
 import static com.vizor.unreal.tree.CppType.Kind.Enum;
 import static com.vizor.unreal.tree.CppType.Kind.Struct;
 import static java.lang.System.lineSeparator;
@@ -43,7 +44,7 @@ class CastGenerator
     private static final String typeCastHint = "// {0}::{1} <- {2}::{3}" + lineSeparator();
     private static final String dataTypeHint = "// {0} ({1}) <- {2} ({3})" + lineSeparator();
 
-    private static final String inputItemName = "Item";
+    private static final String inputItemName = "InItem";
     private static final String outputItemName = "OutItem";
 
     private static final Logger log = LogManager.getLogger(CastGenerator.class);
@@ -89,7 +90,7 @@ class CastGenerator
             ns.add(generateCast(ueStruct, cppStruct, this::generateUeToProtoCast));
         });
 
-        ns.setResidence(Cpp);
+        ns.setResidence(Header);
         return ns;
     }
 
@@ -162,7 +163,7 @@ class CastGenerator
                         " type, the number of args should be 2, not: " + params.size());
             }
 
-            final String castPattern =  outputItemName + ".{0} = " + castMethod.getMethodName() + "<{1}>(Item.{2}());";
+            final String castPattern =  outputItemName + ".{0} = " + castMethod.getMethodName() + "<{1}>(" + inputItemName + ".{2}());";
             return format(castPattern, outField.getName(), params.stream().map(CppType::toString).collect(joining(", ")),
                     inField.getName());
         }
