@@ -135,9 +135,9 @@ class ProtoProcessor implements Runnable
 
     private Stream<ProtoProcessorArgs> GatherImportedProtosDeep(final ProtoProcessorArgs proto, final List<ProtoProcessorArgs> otherProtos)
     {
-		final Stream<ProtoProcessorArgs> importedProtos = GatherImportedProtos(proto, otherProtos);
-		
-		final List<ProtoProcessorArgs> argss = importedProtos.collect(Collectors.toList());
+        final Stream<ProtoProcessorArgs> importedProtos = GatherImportedProtos(proto, otherProtos);
+        
+        final List<ProtoProcessorArgs> argss = importedProtos.collect(Collectors.toList());
 
         return Stream.concat(Stream.of(proto), argss.stream().flatMap(importedProto->GatherImportedProtosDeep(importedProto, otherProtos)));
     }
@@ -250,11 +250,7 @@ class ProtoProcessor implements Runnable
         
         final List<String> importedProtoNames = GatherImportedProtos(args, otherProcessorArgs).map(
             importedProto -> {
-				// remove extension and fix slashes up
-				final String pathToImportedProtoStr = removeExtension(importedProto.pathToProto.toString()).replace("\\", pathSeparator);
-				
-                final String importedHeaderPath = join(pathSeparator, pathToImportedProtoStr, importedProto.className);
-                return importedHeaderPath;
+                return getHeaderPath(importedProto);
             }
         ).collect(Collectors.toList());
 
@@ -273,15 +269,17 @@ class ProtoProcessor implements Runnable
         final String generatedIncludeName = join("/", config.getWrappersPath(),
                 removeExtension(pathToProtoStr)).replace("\\", pathSeparator);//, args.wrapperName);
 
-        final String castIncludeName = args.className + "Casts.h";
+        final String generatedHeaderPath = getHeaderPath(args);
+                
+        final String castIncludeName = generatedHeaderPath + "Casts.h";
 
         // code. mutable to allow
         final List<CppRecord> cppIncludes = new ArrayList<>(asList(
-            new CppInclude(Cpp, args.className + ".h"),
+            new CppInclude(Cpp, generatedHeaderPath + ".h"),
             new CppInclude(Cpp, "RpcClientWorker.h"),
             new CppInclude(Cpp, "WorkerUtils.h"),
 
-			new CppInclude(Cpp, "GrpcIncludesBegin.h"),
+            new CppInclude(Cpp, "GrpcIncludesBegin.h"),
 
             new CppInclude(Cpp, "grpc/support/log.h", true),
             new CppInclude(Cpp, "grpc++/channel.h", true),
@@ -304,7 +302,7 @@ class ProtoProcessor implements Runnable
 
             new CppInclude(Header, "GrpcIncludesEnd.h"),
 
-            new CppInclude(Header, args.className + ".h")
+            new CppInclude(Header, generatedHeaderPath + ".h")
         ));
 
         castsIncludes.addAll(
@@ -359,6 +357,16 @@ class ProtoProcessor implements Runnable
 
             clients.forEach(w -> w.accept(p).newLine());
         }
+    }
+
+    private static String getHeaderPath(final ProtoProcessorArgs args)
+    {
+        // remove extension and fix slashes up
+        final String pathToGeneratedHeaderDirectory = removeExtension(args.pathToProto.toString()).replace("\\", pathSeparator);
+                
+        final String generatedHeaderPath = join(pathSeparator, pathToGeneratedHeaderDirectory, args.className);
+
+        return generatedHeaderPath;
     }
 
     private CppStruct extractStruct(final TypesProvider provider, final MessageElement me)
