@@ -148,8 +148,11 @@ public abstract class TypesProvider
     {
         final CppType previous = types.put(protoType, cppType);
         if (nonNull(previous))
-            throw new RuntimeException("Type association '" + protoType + "' -> '" + previous.getName() +
-                    "' is already defined");
+            {
+                return;
+                // throw new RuntimeException("Type association '" + protoType + "' -> '" + previous.getName() +
+                //     "' is already defined");
+    }
 
         if (nonNull(nativeType))
             cppType.markAsNative(nativeType);

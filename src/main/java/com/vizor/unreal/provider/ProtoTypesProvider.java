@@ -73,6 +73,7 @@ public final class ProtoTypesProvider extends TypesProvider
         register("int32", plainNs("int32", Primitive, protobufNamespace), int.class);
         register("int64", plainNs("int64", Primitive, protobufNamespace), long.class);
         register("float", plain("float", Primitive), float.class);
+        register("double", plain("double", Primitive), double.class);
         register("bool", plain("bool", Primitive), boolean.class);
         register("void", plain("void", Primitive), void.class);
 

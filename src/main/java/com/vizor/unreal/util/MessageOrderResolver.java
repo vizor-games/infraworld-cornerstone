@@ -52,7 +52,7 @@ public class MessageOrderResolver
                 // getFlatGenericArguments() returns an empty collection if it doesn't contain any generic arguments
                 fieldType.getFlatGenericArguments().stream()
                     .filter(cache::contains)
-                    .forEach(genericArg -> graph.addEdge(genericArg, struct.getType()));
+                    .forEach(genericArg -> {if (struct.getType() != genericArg) graph.addEdge(genericArg, struct.getType());});
             }
         }
 

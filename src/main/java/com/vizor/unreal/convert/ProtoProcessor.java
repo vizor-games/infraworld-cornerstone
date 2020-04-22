@@ -96,15 +96,15 @@ class ProtoProcessorArgs
         this.packageNamespace = new CppNamespace(parse.packageName());
     }
 
-    final ProtoFileElement parse;
-    final Path pathToProto;
-    final DestinationConfig pathToConverted;
-    final String moduleName;
+    public final ProtoFileElement parse;
+    public final Path pathToProto;
+    public final DestinationConfig pathToConverted;
+    public final String moduleName;
 
-    final String wrapperName;
+    public final String wrapperName;
 
-    final String className;
-    final CppNamespace packageNamespace;
+    public final String className;
+    public final CppNamespace packageNamespace;
 }
 
 class ProtoProcessor implements Runnable
@@ -402,7 +402,13 @@ class ProtoProcessor implements Runnable
             if (!sourceDoc.isEmpty())
                 field.javaDoc.set(sourceDoc);
 
-            field.addAnnotation(fieldAnnotations);
+field.addAnnotation(fieldAnnotations);
+
+if (ueType == type)
+{
+    // disable UPROPERTY on self-references
+    field.enableAnnotations(false);
+}
             fields.add(field);
         }
 

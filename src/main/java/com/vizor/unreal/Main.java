@@ -26,6 +26,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.vizor.unreal.util.Misc.findFilesRecursively;
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
@@ -73,13 +76,21 @@ public class Main
             log.debug("Globally changed {} log level from {} to {}", packageName, previousLevel.name(), logLevel.name());
         }
 
-        final Path srcPath = get(config.getSrcPath());
+        final List<Path> searchPaths = config.getProtoSearchPaths().stream().map(pathString->get(pathString)).collect(Collectors.toList());
+        final List<Path> includePaths = config.getProtoIncludePaths().stream().map(pathString->get(pathString)).collect(Collectors.toList());
         final DestinationConfig dstPath = config.getDstPath();
 
         final Converter converter = new Converter(config.getModuleName());
 
-        if (!srcPath.toFile().isDirectory())
-            throw new IllegalArgumentException("Source folder '" + srcPath + "' does not exist, or isn't a directory");
+        searchPaths.forEach(searchPath->{
+            if (!searchPath.toFile().isDirectory())
+                throw new IllegalArgumentException("Search path folder '" + searchPath + "' does not exist, or isn't a directory");
+        });
+
+        includePaths.forEach(includePath -> {
+            if (!includePath.toFile().isDirectory())
+                throw new IllegalArgumentException("Include path folder '" + includePath + "' does not exist, or isn't a directory");
+        });
 
         if (!dstPath.pathPublic.toFile().isDirectory())
             throw new IllegalArgumentException("Destination Public folder '" + dstPath.pathPublic + "' does not exist, or isn't a directory");
@@ -89,8 +100,8 @@ public class Main
 
         log.info("Running cornerstone...");
         log.info("Logging level: {}", log.getLevel().toString());
-        log.info("Source path: '{}'", srcPath);
-        log.info("Destination path: '{}'", dstPath);
+        
+        log.info("Destination paths: '{}'", dstPath);
 
         if (!stringIsNullOrEmpty(config.getModuleName()))
         {
@@ -105,18 +116,42 @@ public class Main
         log.info("Company name: {}", config.getCompanyName());
         log.info("Wrappers path: %INCLUDE_DIR%/{}", config.getWrappersPath());
 
-        launchSingle(srcPath, dstPath, converter);
+        launchSingle(searchPaths, includePaths, dstPath, converter);
     }
 
-    private static void launchSingle(final Path srcPath, final DestinationConfig dstPath, final Converter converter)
+    private static Path getIncludeRelativePath(final Path absolutePath, final List<Path> includePaths)
+    {
+        for (final Path possibleBasePath : includePaths) 
+        {
+            if (absolutePath.startsWith(possibleBasePath))
+            {
+                return possibleBasePath;
+            }
+        }
+
+        throw new RuntimeException("Couldn't find a base path for " + absolutePath);
+    }
+
+    private static void launchSingle(final List<Path> searchPaths, final List<Path> includePaths, final DestinationConfig dstPath, final Converter converter)
     {
         final long start = nanoTime();
 
-        final List<Tuple<Path, DestinationConfig>> paths = findFilesRecursively(srcPath, dstPath, "proto");
+        final Map<Path, List<Tuple<Path, DestinationConfig>>> paths = 
+            searchPaths.stream()
+                .flatMap(
+                    searchPath -> findFilesRecursively(searchPath, dstPath, "proto").stream()
+                )
+                .collect(Collectors.groupingBy(pathTuple -> getIncludeRelativePath(pathTuple.first(), includePaths)));
 
-        // Display how many proto file(s) pending processed
-        log.info("Running converter, {} proto-files pending processed.", paths.size());
-        converter.convert(srcPath, paths);
+        final Map<Path, List<Tuple<Path, DestinationConfig>>> visiblePaths = includePaths.stream()
+            .flatMap(
+                includePath -> findFilesRecursively(includePath, dstPath, "proto")
+                    .stream()
+                    .map(pathTuple -> Tuple.of(includePath, pathTuple))
+                )
+            .collect(Collectors.groupingBy(tuple -> tuple.first(), Collectors.mapping(tuple -> tuple.second(), Collectors.toList())));
+
+        converter.convert(visiblePaths, paths);
 
         final float elapsed = (float) round((double) (nanoTime() - start) / 1000000.0) / 1000.0f;
         log.info("All done in {} seconds. Shutting converter down...", elapsed);
