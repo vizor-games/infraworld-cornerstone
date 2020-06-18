@@ -36,13 +36,15 @@ public final class CliHandler
     public static class Parse
     {
         private String srcPath;
-        private String dstPath;
+        private String dstPublicPath;
+        private String dstPrivatePath;
         private String moduleName;
         private String logLevel;
     }
 
     private static Option srcOption = new Option("s", "src_path", true, "Proto files root folder");
-    private static Option dstOption = new Option("d", "dst_path", true, "Cpp generated files destination folder");
+    private static Option dstPublicOption = new Option("dst_public_path", true, "Cpp generated files destination public folder");
+    private static Option dstPrivateOption = new Option("dst_private_path", true, "Cpp generated files destination private folder");
     private static Option moduleNameOption = new Option("m", "module_name", true, "UE 4 API/Plugin name");
     private static Option logLevelOption = new Option("l", "log_level", true, "Override log level. Available options are: " +
         getLowercaseLog4jLevels().toString());
@@ -55,7 +57,8 @@ public final class CliHandler
     {
         final Options options = new Options();
         options.addOption(srcOption)
-               .addOption(dstOption)
+               .addOption(dstPublicOption)
+               .addOption(dstPrivateOption)
                .addOption(moduleNameOption)
                .addOption(logLevelOption)
                .addOption(helpOption)
@@ -67,7 +70,8 @@ public final class CliHandler
             parse = new Parse();
             {
                 parse.srcPath = cmd.getOptionValue(srcOption.getOpt());
-                parse.dstPath = cmd.getOptionValue(dstOption.getOpt());
+                parse.dstPublicPath = cmd.getOptionValue(dstPublicOption.getOpt());
+                parse.dstPrivatePath = cmd.getOptionValue(dstPrivateOption.getOpt());
                 parse.moduleName = cmd.getOptionValue(moduleNameOption.getOpt());
                 parse.logLevel = cmd.getOptionValue(logLevelOption.getOpt());
             }

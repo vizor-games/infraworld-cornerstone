@@ -78,6 +78,12 @@ public class Main
 
         final Converter converter = new Converter(config.getModuleName());
 
+        log.info("Running cornerstone...");
+        log.info("Logging level: {}", log.getLevel().toString());
+        log.info("Source path: '{}'", srcPath);
+        log.info("Destination public path: '{}'", dstPath.pathPublic);
+        log.info("Destination private path: '{}'", dstPath.pathPrivate);
+
         if (!srcPath.toFile().isDirectory())
             throw new IllegalArgumentException("Source folder '" + srcPath + "' does not exist, or isn't a directory");
 
@@ -86,11 +92,6 @@ public class Main
 
         if (!dstPath.pathPrivate.toFile().isDirectory())
             throw new IllegalArgumentException("Destination Private folder '" + dstPath.pathPrivate + "' does not exist, or isn't a directory");
-
-        log.info("Running cornerstone...");
-        log.info("Logging level: {}", log.getLevel().toString());
-        log.info("Source path: '{}'", srcPath);
-        log.info("Destination path: '{}'", dstPath);
 
         if (!stringIsNullOrEmpty(config.getModuleName()))
         {

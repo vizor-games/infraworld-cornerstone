@@ -293,9 +293,9 @@ public final class Config
 
     public final void validate()
     {
-        checkString(srcPath, "srcPath must not be null or empty");
-        checkString(dstPublicPath, "dstPublicPath must not be null or empty");
-        checkString(dstPrivatePath, "dstPrivatePath must not be null or empty");
+        checkString(srcPath, "src_path must not be null or empty");
+        checkString(dstPublicPath, "dst_public_path must not be null or empty");
+        checkString(dstPrivatePath, "dst_private_path must not be null or empty");
 
         for (int i = 0; i < moduleName.length(); i++)
         {
@@ -313,7 +313,7 @@ public final class Config
         for (int i = 0; i < companyName.length(); i++)
         {
             if (companyName.charAt(i) == '|')
-                throw new RuntimeException("company_name, which is '" + companyName + "' mustn't contain '|'");
+                throw new RuntimeException("company_name, which is '" + companyName + "' must not contain '|'");
         }
 
         if (!stringIsNullOrEmpty(logLevel))
