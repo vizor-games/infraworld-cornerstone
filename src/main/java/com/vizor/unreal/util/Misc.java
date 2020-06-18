@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import com.vizor.unreal.config.DestinationConfig;
+
 import static java.lang.Character.isDigit;
 import static java.lang.Character.isJavaIdentifierPart;
 import static java.lang.Character.isLowerCase;
@@ -420,6 +422,32 @@ public class Misc
                 .filter(Files::isRegularFile)
                 .filter(p -> endsWithIgnoreCase.test(p.toString()))
                 .map(p -> Tuple.of(p, get(dst.toString(), src.relativize(p.getParent()).toString())))
+                .collect(toList());
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static List<Tuple<Path, DestinationConfig>> findFilesRecursively(final Path src, final DestinationConfig dst, final String extension)
+    {
+        final Predicate<String> endsWithIgnoreCase = str -> {
+            final int sufLen = extension.length();
+            return str.regionMatches(true, str.length() - sufLen, extension, 0, sufLen);
+        };
+
+        try {
+            return walk(src)
+                .filter(Files::isRegularFile)
+                .filter(p -> endsWithIgnoreCase.test(p.toString()))
+                .map(p -> { 
+                    final Path relativeSourceFilePath = src.relativize(p.getParent());
+
+					final DestinationConfig relativeDestinationConfig = 
+						dst.append(relativeSourceFilePath);
+
+                    return Tuple.of(p, relativeDestinationConfig);
+                })
                 .collect(toList());
         }
         catch (IOException e) {

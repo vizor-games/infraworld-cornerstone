@@ -23,6 +23,7 @@ import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.squareup.wire.schema.internal.parser.ServiceElement;
 import com.squareup.wire.schema.internal.parser.TypeElement;
 import com.vizor.unreal.config.Config;
+import com.vizor.unreal.config.DestinationConfig;
 import com.vizor.unreal.provider.ProtoTypesProvider;
 import com.vizor.unreal.provider.TypesProvider;
 import com.vizor.unreal.provider.UnrealTypesProvider;
@@ -41,11 +42,16 @@ import com.vizor.unreal.tree.preprocessor.CppPragma;
 import com.vizor.unreal.util.MessageOrderResolver;
 import com.vizor.unreal.util.Tuple;
 import com.vizor.unreal.writer.CppPrinter;
+import com.vizor.unreal.writer.CppPrinter.HeaderType;
+
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.squareup.wire.schema.Field.Label.REPEATED;
 import static com.vizor.unreal.tree.CppAnnotation.BlueprintReadWrite;
@@ -63,7 +69,6 @@ import static com.vizor.unreal.util.Misc.snakeCaseToCamelCase;
 import static com.vizor.unreal.util.Misc.dashToUnderscore;
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
 import static com.vizor.unreal.util.Tuple.of;
-import static java.io.File.separator;
 import static java.lang.String.join;
 import static java.nio.file.Paths.get;
 import static java.util.Arrays.asList;
@@ -73,37 +78,18 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-class ProtoProcessor implements Runnable
+class ProtoProcessorArgs
 {
-    private static final Logger log = getLogger(ProtoProcessor.class);
-
-    private final ProtoFileElement parse;
-    private final Path pathToProto;
-    private final Path pathToConverted;
-    private final String moduleName;
-
-    private final String wrapperName;
-
-    private final String className;
-    private final CppNamespace packageNamespace;
-
-    private final TypesProvider ueProvider = new UnrealTypesProvider();
-    private final TypesProvider protoProvider = new ProtoTypesProvider();
-
-    ProtoProcessor(
-        final ProtoFileElement parse,
-        final Path pathToProto,
-        final Path pathToConverted,
-        final String moduleName
-    )
+    ProtoProcessorArgs(final ProtoFileElement parse, final Path pathToProto,
+    final DestinationConfig pathToConverted2, final String moduleName)
     {
         this.parse = requireNonNull(parse);
         this.pathToProto = requireNonNull(pathToProto);
-        this.pathToConverted = requireNonNull(pathToConverted);
+        this.pathToConverted = requireNonNull(pathToConverted2);
         this.moduleName = requireNonNull(moduleName);
 
         this.wrapperName = removeExtension(pathToProto.toFile().getName());
-        
+
         this.className = snakeCaseToCamelCase(dashToUnderscore(wrapperName));
 
 //        if (parse.packageName() == null)
@@ -112,16 +98,76 @@ class ProtoProcessor implements Runnable
         this.packageNamespace = new CppNamespace(parse.packageName());
     }
 
+    final ProtoFileElement parse;
+    final Path pathToProto;
+    final DestinationConfig pathToConverted;
+    final String moduleName;
+
+    final String wrapperName;
+
+    final String className;
+    final CppNamespace packageNamespace;
+}
+
+class ProtoProcessor implements Runnable
+{
+    private static final Logger log = getLogger(ProtoProcessor.class);
+
+    private final ProtoProcessorArgs args;
+
+    private final TypesProvider ueProvider = new UnrealTypesProvider();
+    private final TypesProvider protoProvider = new ProtoTypesProvider();
+
+    private final List<ProtoProcessorArgs> otherProcessorArgs;
+
+    // to avoid any confusion when converting code on Windows,
+    // force part separator to be forward slash
+    private static final String pathSeparator = "/";
+
+    ProtoProcessor(ProtoProcessorArgs args, List<ProtoProcessorArgs> otherProcessorArgs) {
+        this.args = args;
+        this.otherProcessorArgs = otherProcessorArgs;
+    }
+
+    private Stream<ProtoProcessorArgs> GatherImportedProtos(final ProtoProcessorArgs proto, final List<ProtoProcessorArgs> otherProtos)
+    {
+        return otherProtos.stream()
+            .filter(otherProto -> proto.parse.imports().stream().map(importPathString -> get(importPathString)).anyMatch(importPath -> importPath.equals(otherProto.pathToProto)));
+    }
+
+    private Stream<ProtoProcessorArgs> GatherImportedProtosDeep(final ProtoProcessorArgs proto, final List<ProtoProcessorArgs> otherProtos)
+    {
+        final Stream<ProtoProcessorArgs> importedProtos = GatherImportedProtos(proto, otherProtos);
+
+        final List<ProtoProcessorArgs> argss = importedProtos.collect(Collectors.toList());
+
+        return Stream.concat(Stream.of(proto), argss.stream().flatMap(importedProto->GatherImportedProtosDeep(importedProto, otherProtos)));
+    }
+
+    private void GatherTypes(final ProtoProcessorArgs proto, final List<ProtoProcessorArgs> otherProtos, TypesProvider ueProvider, TypesProvider protoProvider)
+    {
+        final Stream<ProtoProcessorArgs> importedProtos = GatherImportedProtosDeep(proto, otherProtos);
+
+        importedProtos.forEach(
+            importedProto -> importedProto.parse.types().forEach(
+                typeElement ->
+                {
+                    final String fullTypeName = importedProto.parse.packageName() + "." + typeElement.name();
+
+                    ueProvider.register(fullTypeName, ueNamedType(importedProto.className, typeElement));
+                    protoProvider.register(fullTypeName, cppNamedType(importedProto.packageNamespace, typeElement));
+                }
+            )
+        );
+    }
+
     @Override
     public void run()
     {
-        final List<ServiceElement> services = parse.services();
+        final List<ServiceElement> services = args.parse.services();
 
-        for (final TypeElement t : parse.types())
-        {
-            ueProvider.register(dashToUnderscore(t.name()), ueNamedType(className, t));
-            protoProvider.register(dashToUnderscore(t.name()), cppNamedType(t));
-        }
+        GatherTypes(args, otherProcessorArgs, ueProvider, protoProvider);
+
 
         final List<Tuple<CppStruct, CppStruct>> castAssociations = new ArrayList<>();
         final List<CppStruct> unrealStructures = new ArrayList<>();
@@ -129,7 +175,7 @@ class ProtoProcessor implements Runnable
         final List<CppEnum> ueEnums = new ArrayList<>();
 
         // At this moment, we have all types registered in both type providers
-        for (final TypeElement s : parse.types())
+        for (final TypeElement s : args.parse.types())
         {
             if (s instanceof MessageElement)
             {
@@ -168,7 +214,7 @@ class ProtoProcessor implements Runnable
         ));
 
         // Generate RPC workers
-        final ClientWorkerGenerator clientWorkerGenerator = new ClientWorkerGenerator(services, ueProvider, parse);
+        final ClientWorkerGenerator clientWorkerGenerator = new ClientWorkerGenerator(services, ueProvider, args.parse);
         final List<CppClass> workers = clientWorkerGenerator.genClientClass();
 
         // Generate RPC clients
@@ -186,52 +232,103 @@ class ProtoProcessor implements Runnable
             dispatchers.addAll(cg.getDelegates());
         }
 
-        final String pathToProtoStr = removeExtension(pathToProto.toString());
-        final String outDirPath = join(separator, pathToConverted.toString(), pathToProtoStr);
+        final String pathToProtoStr = removeExtension(args.pathToProto.toString());
+        DestinationConfig dstPath = Config.get().getDstPath().append(pathToProtoStr);
 
         // Should create an output directories if does not exit.
         @SuppressWarnings("unused")
-        final boolean ignore = get(outDirPath).toFile().mkdirs();
+        final boolean ignorePublic = dstPath.pathPublic.toFile().mkdirs();
 
-        final List<CppInclude> headerIncludes = asList(
+        @SuppressWarnings("unused")
+        final boolean ignorePrivate = dstPath.pathPrivate.toFile().mkdirs();
+
+        final List<CppInclude> headerIncludes = new ArrayList<>(asList(
             // header
             new CppInclude(Header, "CoreMinimal.h"),
             new CppInclude(Header, "Conduit.h"),
             new CppInclude(Header, "GenUtils.h"),
-            new CppInclude(Header, "RpcClient.h"),
-            new CppInclude(Header, className + ".generated.h")
-        );
+            new CppInclude(Header, "RpcClient.h")
+        ));
+
+        final List<String> importedProtoNames = GatherImportedProtos(args, otherProcessorArgs).map(
+            importedProto -> {
+                return getHeaderPath(importedProto);
+            }
+        ).collect(Collectors.toList());
+
+        headerIncludes.addAll(importedProtoNames.stream().map(path->new CppInclude(Header, path + ".h")).collect(Collectors.toList()));
+
+        if (clients.size() > 0 || unrealStructures.size() > 0 || ueEnums.size() > 0)
+        {
+            headerIncludes.add(
+                new CppInclude(Header, args.className + ".generated.h")
+            );
+        }
 
         final Config config = Config.get();
 
         // TODO: Fix paths
         final String generatedIncludeName = join("/", config.getWrappersPath(),
-                removeExtension(pathToProtoStr), wrapperName);
+                removeExtension(pathToProtoStr)).replace("\\", pathSeparator);//, args.wrapperName);
+
+        final String generatedHeaderPath = getHeaderPath(args);
+
+        final String castIncludeName = generatedHeaderPath + "Casts.h";
 
         // code. mutable to allow
         final List<CppRecord> cppIncludes = new ArrayList<>(asList(
-            new CppInclude(Cpp, className + ".h"),
+            new CppInclude(Cpp, generatedHeaderPath + ".h"),
             new CppInclude(Cpp, "RpcClientWorker.h"),
-            new CppInclude(Cpp, "CastUtils.h"),
+            new CppInclude(Cpp, "WorkerUtils.h"),
 
             new CppInclude(Cpp, "GrpcIncludesBegin.h"),
 
             new CppInclude(Cpp, "grpc/support/log.h", true),
             new CppInclude(Cpp, "grpc++/channel.h", true),
+            new CppInclude(Cpp, "ChannelProvider.h", false),
 
             new CppInclude(Cpp, generatedIncludeName + ".pb.hpp", false),
             new CppInclude(Cpp, generatedIncludeName + ".grpc.pb.hpp", false),
-            new CppInclude(Cpp, "ChannelProvider.h", false),
 
-            new CppInclude(Cpp, "GrpcIncludesEnd.h")
+            new CppInclude(Cpp, "GrpcIncludesEnd.h"),
+            new CppInclude(Cpp, castIncludeName)
         ));
+
+        final List<CppRecord> castsIncludes = new ArrayList<>(asList(
+            new CppInclude(Header, "CastUtils.h"),
+
+            new CppInclude(Header, "GrpcIncludesBegin.h"),
+
+            new CppInclude(Header, generatedIncludeName + ".pb.h", false),
+            new CppInclude(Header, generatedIncludeName + ".grpc.pb.h", false),
+
+            new CppInclude(Header, "GrpcIncludesEnd.h"),
+
+            new CppInclude(Header, generatedHeaderPath + ".h")
+        ));
+
+        castsIncludes.addAll(
+            importedProtoNames.stream()
+            .map(path->new CppInclude(Header, path + "Casts.h"))
+            .collect(Collectors.toList())
+        );
 
         if (!stringIsNullOrEmpty(config.getPrecompiledHeader()))
             cppIncludes.add(0, new CppInclude(Cpp, config.getPrecompiledHeader(), false));
 
-        final Path outFilePath = get(outDirPath, className);
+        final DestinationConfig outFilePath = dstPath.append(args.className);
+        final DestinationConfig outCastsFilePath = dstPath.append(args.className + "Casts");
 
-        try (final CppPrinter p = new CppPrinter(outFilePath, moduleName.toUpperCase()))
+        try (final CppPrinter castsPrinter = new CppPrinter(outCastsFilePath, args.moduleName.toUpperCase(), HeaderType.Private))
+        {
+            castsIncludes.forEach(i -> i.accept(castsPrinter));
+            castsPrinter.newLine();
+
+            // Write casts to the CPP file
+            casts.accept(castsPrinter).newLine();
+        }
+
+        try (final CppPrinter p = new CppPrinter(outFilePath, args.moduleName.toUpperCase()))
         {
             headerIncludes.forEach(i -> i.accept(p));
             p.newLine();
@@ -255,13 +352,23 @@ class ProtoProcessor implements Runnable
             p.newLine();
 
             // Write casts to the CPP file
-            casts.accept(p).newLine();
+            // casts.accept(p).newLine();
 
             // Workers are being written to the *.cpp file, have to write them before
             workers.forEach(c -> c.accept(p).newLine());
 
             clients.forEach(w -> w.accept(p).newLine());
         }
+    }
+
+    private static String getHeaderPath(final ProtoProcessorArgs args)
+    {
+        // remove extension and fix slashes up
+        final String pathToGeneratedHeaderDirectory = removeExtension(args.pathToProto.toString()).replace("\\", pathSeparator);
+
+        final String generatedHeaderPath = join(pathSeparator, pathToGeneratedHeaderDirectory, args.className);
+
+        return generatedHeaderPath;
     }
 
     private CppStruct extractStruct(final TypesProvider provider, final MessageElement me)
@@ -304,7 +411,7 @@ class ProtoProcessor implements Runnable
 
         final CppStruct struct = new CppStruct(type, fields);
 
-        struct.addAnnotation(DisplayName, className + " " + me.name());
+        struct.addAnnotation(DisplayName, args.className + " " + me.name());
 
         if (!me.documentation().isEmpty())
             struct.javaDoc.set(me.documentation());
@@ -324,7 +431,7 @@ class ProtoProcessor implements Runnable
             cppEnum.getJavaDoc().set(ee.documentation());
 
         cppEnum.addAnnotation(BlueprintType);
-        cppEnum.addAnnotation(DisplayName, className + " " + ee.name());
+        cppEnum.addAnnotation(DisplayName, args.className + " " + ee.name());
 
         cppEnum.setResidence(Header);
         return cppEnum;
@@ -340,8 +447,9 @@ class ProtoProcessor implements Runnable
             throw new RuntimeException("Unknown type: '" + el.getClass().getName() + "'");
     }
 
-    private CppType cppNamedType(final TypeElement el)
-    {
+
+
+    private static CppType cppNamedType(CppNamespace packageNamespace, TypeElement el) {
         if (el instanceof MessageElement)
         {
             final CppType mt = plain(el.name(), Struct);
@@ -364,5 +472,11 @@ class ProtoProcessor implements Runnable
         {
             throw new RuntimeException("Unknown type: '" + el.getClass().getName() + "'");
         }
+    }
+
+
+    private CppType cppNamedType(final TypeElement el)
+    {
+        return cppNamedType(args.packageNamespace, el);
     }
 }

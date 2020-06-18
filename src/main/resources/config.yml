@@ -6,11 +6,15 @@
 
 #
 # A path, where *.proto source files resides.
-src_path: '/Users/netherwire/Projects/protobuild/proto'
+src_path: 'Infraworld/protos'
 
 #
-# A path, where generated C++ classes should be placed.
-dst_path: '/Users/netherwire/Projects/protobuild/Wrappers'
+# A path, where generated UE C++ public classes should be placed.
+dst_public_path: 'Infraworld/Plugins/GrpcClient/Source/GrpcClient/Public/'
+
+#
+# A path, where generated UE C++ private classes should be placed.
+dst_private_path: 'Infraworld/Plugins/GrpcClient/Source/GrpcClient/Private/'
 
 #
 # Name of the module (Needed to compute API, like MYMODULE_API)

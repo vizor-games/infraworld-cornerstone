@@ -51,7 +51,7 @@ import static java.util.stream.Collectors.toList;
 
 class ClientWorkerGenerator
 {
-    private static final CppType parentType = plain("RpcClientWorker", Class);
+    private static final CppType genericParentType = wildcardGeneric("TStubbedRpcWorker", Class, 1);
     private static final CppType wildcardUniquePtr = wildcardGeneric("unique_ptr", Struct, 1);
 
     static
@@ -86,39 +86,17 @@ class ClientWorkerGenerator
         final List<CppField> cppFields = extractConduits(service);
         final List<CppField> fields = new ArrayList<>(cppFields);
 
-        // 0 - Request Type
-        // 1 - Response Type
-        // 2 - UE Response Generic Type
-        // 3 - UE Response Type
-        // 4 - Package Name
-        // 5 - Function Name
+
+
+        // 0 - UE Request Type
+        // 1 - Request Type
+        // 2 - Response Type
+        // 3 - UE Response Generic Type
+        // 4 - UE Response Type
+        // 5 - Package Name
+        // 6 - Function Name
         final String rpcMethodBody = join(lineSeparator(), asList(
-            "{4}{0} ClientRequest(casts::Proto_Cast<{4}{0}>(Request));",
-            "",
-            "grpc::ClientContext ClientContext;",
-            "casts::CastClientContext(Context, ClientContext);",
-            "",
-            "grpc::CompletionQueue Queue;",
-            "grpc::Status Status;",
-            "",
-            "std::unique_ptr<grpc::ClientAsyncResponseReader<{4}{1}>> Rpc(Stub->Async{5}(&ClientContext, ClientRequest, &Queue));",
-            "",
-            "{4}{1} Response;",
-            "Rpc->Finish(&Response, &Status, (void*)1);",
-            "",
-            "void* got_tag;",
-            "bool ok = false;",
-            "",
-            "GPR_ASSERT(Queue.Next(&got_tag, &ok));",
-            "GPR_ASSERT(got_tag == (void*)1);",
-            "GPR_ASSERT(ok);",
-            "",
-            "FGrpcStatus GrpcStatus;",
-            "",
-            "casts::CastStatus(Status, GrpcStatus);",
-            "{2} Result(casts::Proto_Cast<{3}>(Response), GrpcStatus);",
-            "",
-            "return Result;"
+            "return AsyncRequest<{0}, {5}{1}, {4}, {5}{2}>(Request, Context, &decltype(Stub)::element_type::Async{6});"
         ));
 
         final String streamingRpcMethodBody = join(lineSeparator(), asList(
@@ -175,26 +153,28 @@ class ClientWorkerGenerator
             final RpcElement rpc = service.rpcs().get(i);
             final CppFunction function = methods.get(i);
 
+            final CppType request = provider.get(rpc.requestType());
+            final CppType response = provider.get(rpc.responseType());
             if (rpc.responseStreaming())
             {
-                final CppType response = provider.get(rpc.responseType());
                 final CppType responseWithStatus = rspWithSts.makeGeneric(array.makeGeneric(response));
-                function.setBody(format(streamingRpcMethodBody, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
+                function.setBody(format(streamingRpcMethodBody, request, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
                         response, getPackageNamespaceString(), function.getName()));
             }
             else
             {
-                final CppType response = provider.get(rpc.responseType());
                 final CppType responseWithStatus = rspWithSts.makeGeneric(response);
-    
-                function.setBody(format(rpcMethodBody, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
+                function.setBody(format(rpcMethodBody, request, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
                         response, getPackageNamespaceString(), function.getName()));
-                }
+            }
         }
 
         methods.add(createStubInitializer(service, fields));
         methods.add(createUpdate(service, fields));
-        fields.add(createStub(service));
+
+        final CppType stubType = createStubType(service);
+
+        final CppType parentType = genericParentType.makeGeneric(stubType);
 
         final CppClass clientClass = new CppClass(classType, parentType, fields, methods);
 
@@ -272,9 +252,14 @@ class ClientWorkerGenerator
         return update;
     }
 
+    private CppType createStubType(final ServiceElement service)
+    {
+        return plain(getPackageNamespaceString() + service.name() + "::Stub", Struct);
+    }
+
     private CppField createStub(final ServiceElement service)
     {
-        final CppType plain = plain(getPackageNamespaceString() + service.name() + "::Stub", Struct);
+        final CppType plain = createStubType(service);
         final CppType stubPtr = wildcardUniquePtr.makeGeneric(plain);
         final CppField stub = new CppField(stubPtr, "Stub");
 
