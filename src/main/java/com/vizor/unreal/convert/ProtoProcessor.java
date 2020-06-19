@@ -267,9 +267,11 @@ class ProtoProcessor implements Runnable
 
         final Config config = Config.get();
 
-        // TODO: Fix paths
-        final String generatedIncludeName = join("/", config.getWrappersPath(),
-                removeExtension(pathToProtoStr)).replace("\\", pathSeparator);//, args.wrapperName);
+        String generatedIncludeName = config.getWrappersPath();
+        if (!stringIsNullOrEmpty(generatedIncludeName)) {
+            generatedIncludeName += pathSeparator;
+        }
+        generatedIncludeName += join(pathSeparator, pathToProtoStr, args.wrapperName);
 
         final String generatedHeaderPath = getHeaderPath(args);
 

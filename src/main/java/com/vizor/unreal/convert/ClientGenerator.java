@@ -67,7 +67,6 @@ class ClientGenerator
     // Special structures, wrapping requests and responses:
     static final CppType reqWithCtx = wildcardGeneric("TRequestWithContext", Struct, 1);
     static final CppType rspWithSts = wildcardGeneric("TResponseWithStatus", Struct, 1);
-    static final CppType array = wildcardGeneric("TArray", Class, 1);
     static final CppType conduitType = wildcardGeneric("TConduit", Struct, 2);
     static final CppArgument contextArg = new CppArgument(plain("FGrpcClientContext", Struct).makeRef(), "Context");
 
@@ -96,28 +95,14 @@ class ClientGenerator
         final List<RpcElement> rpcs = service.rpcs();
 
         requestsResponses = new HashMap<>(rpcs.size());
-        
+
         rpcs.forEach(r -> {
-            if (r.responseStreaming())
-            {
-                CppType responseType = plain("TArray<" + provider.get(r.responseType()) + ">", CppType.Kind.Wildcard);
-                requestsResponses.put(r.name(),
-                    Tuple.of(
-                        provider.get(r.requestType()),
-                        responseType
-                        // provider.get(responseType)
-                    )
-                );
-            }
-            else
-            {
-                requestsResponses.put(r.name(),
-                    Tuple.of(
-                        provider.get(r.requestType()),
-                        provider.get(r.responseType())
-                    )
-                );
-            }
+            requestsResponses.put(r.name(),
+                Tuple.of(
+                    provider.get(r.requestType()),
+                    provider.get(r.responseType())
+                )
+            );
         });
 
         conduits = genConduits();
