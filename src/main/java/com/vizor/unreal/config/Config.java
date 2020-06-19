@@ -307,7 +307,6 @@ public final class Config
             }
         }
 
-        checkString(wrappersPath, "wrappers_path must not be null or empty");
         checkString(companyName, "company_name must not be null or empty");
 
         for (int i = 0; i < companyName.length(); i++)
