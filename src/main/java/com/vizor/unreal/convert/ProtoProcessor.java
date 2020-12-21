@@ -139,7 +139,7 @@ class ProtoProcessor implements Runnable
         
         final List<ProtoProcessorArgs> argss = importedProtos.collect(Collectors.toList());
 
-        return Stream.concat(Stream.of(proto), argss.stream().flatMap(importedProto->GatherImportedProtosDeep(importedProto, otherProtos)));
+        return Stream.concat(Stream.of(proto), argss.stream().flatMap(importedProto->GatherImportedProtosDeep(importedProto, otherProtos))).distinct();
     }
 
     private void GatherTypes(final ProtoProcessorArgs proto, final List<ProtoProcessorArgs> otherProtos, TypesProvider ueProvider, TypesProvider protoProvider)
