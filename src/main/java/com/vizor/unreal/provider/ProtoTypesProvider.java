@@ -76,8 +76,8 @@ public final class ProtoTypesProvider extends TypesProvider
         register("bool", plain("bool", Primitive), boolean.class);
         register("void", plain("void", Primitive), void.class);
 
-        register("uint32", plainNs("uint32", Primitive, protobufNamespace));
-        register("uint64", plainNs("uint64", Primitive, protobufNamespace));
+        register("uint32", plain("uint32", Primitive));
+        register("uint64", plain("uint64", Primitive));
 
         register("string", plainNs("string", Struct, stdNs), String.class);
         register("map", genericNs("Map", Struct, 2, protobufNamespace), Map.class);

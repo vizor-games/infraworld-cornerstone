@@ -25,11 +25,13 @@ public final class CppDelegate implements CtLeaf
 {
     private final CppType type;
     private final List<CppArgument> arguments;
+    private final boolean dynamic;
 
-    public CppDelegate(final CppType type, final List<CppArgument> arguments)
+    public CppDelegate(final CppType type, final List<CppArgument> arguments, final boolean dynamic)
     {
         this.type = type;
         this.arguments = unmodifiableList(arguments);
+        this.dynamic = dynamic;
     }
 
     public String getTense()
@@ -59,6 +61,11 @@ public final class CppDelegate implements CtLeaf
     public final CppType getType()
     {
         return type;
+    }
+
+    public final boolean isDynamic()
+    {
+        return dynamic;
     }
 
     @Override

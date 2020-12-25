@@ -35,6 +35,7 @@ import static com.vizor.unreal.convert.ClientGenerator.contextArg;
 import static com.vizor.unreal.convert.ClientGenerator.initFunctionName;
 import static com.vizor.unreal.convert.ClientGenerator.reqWithCtx;
 import static com.vizor.unreal.convert.ClientGenerator.rspWithSts;
+import static com.vizor.unreal.convert.ClientGenerator.array;
 import static com.vizor.unreal.convert.ClientGenerator.supressSuperString;
 import static com.vizor.unreal.convert.ClientGenerator.updateFunctionName;
 import static com.vizor.unreal.tree.CppRecord.Residence.Cpp;
@@ -95,7 +96,53 @@ class ClientWorkerGenerator
         // 5 - Package Name
         // 6 - Function Name
         final String rpcMethodBody = join(lineSeparator(), asList(
-            "return AsyncRequest<{0}, {5}{1}, {4}, {5}{2}>(Request, Context, &decltype(Stub)::element_type::Async{6});"
+            "const {3} Result = AsyncRequest<{0}, {5}{1}, {4}, {5}{2}>(Request, Context, &decltype(Stub)::element_type::Async{6});",
+            "Conduit->Enqueue(Result);",
+            "return Result;"
+        ));
+
+        final String streamingRpcMethodBody = join(lineSeparator(), asList(
+            "const {5}{1} ClientRequest(casts::Proto_Cast<{5}{1}>(Request));",
+            "",
+            "grpc::ClientContext ClientContext;",
+            "casts::CastClientContext(Context, ClientContext);",
+            "",
+            "grpc::CompletionQueue Queue;",
+            "std::unique_ptr<grpc::ClientAsyncReader<{5}{2}>> Rpc(Stub->Async{6}(&ClientContext, ClientRequest, &Queue, (void*)1));",
+            "",
+            "void* got_tag;",
+            "bool ok = false;",
+            "",
+            "GPR_ASSERT(Queue.Next(&got_tag, &ok));",
+            "GPR_ASSERT(got_tag == (void*)1);",
+            "GPR_ASSERT(ok);",
+            "",
+            "grpc::Status Status;",
+            "FGrpcStatus GrpcStatus;",
+            "{5}{2} Response;",
+            "",
+            "while (true)",
+            "\'{\'",
+            "    Rpc->Read(&Response, (void*)1);",
+            "",
+            "    if (Queue.Next(&got_tag, &ok))",
+            "    \'{\'",
+            "        GPR_ASSERT(got_tag == (void*)1);",
+            "        if (!ok)",
+            "        \'{\'",
+            "            break;",
+            "        \'}\'",
+            "",
+            "        casts::CastStatus(Status, GrpcStatus);",
+            "        const {3} WrappedResponse(casts::Proto_Cast<{4}>(Response), GrpcStatus);",
+            "        Conduit->Enqueue(WrappedResponse);",
+            "    \'}\'",
+            "\'}\'",
+            "",
+            "Rpc->Finish(&Status, (void*)1);",
+            "casts::CastStatus(Status, GrpcStatus);",
+            "{3} Result(casts::Proto_Cast<{4}>(Response), GrpcStatus);",
+            "return Result;"
         ));
 
         final List<CppFunction> methods = extractFunctions(service);
@@ -105,12 +152,19 @@ class ClientWorkerGenerator
             final CppFunction function = methods.get(i);
 
             final CppType request = provider.get(rpc.requestType());
-
             final CppType response = provider.get(rpc.responseType());
-            final CppType responseWithStatus = rspWithSts.makeGeneric(response);
-
-            function.setBody(format(rpcMethodBody, request, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
-                    response, getPackageNamespaceString(), function.getName()));
+            if (rpc.responseStreaming())
+            {
+                final CppType responseWithStatus = rspWithSts.makeGeneric(response);
+                function.setBody(format(streamingRpcMethodBody, request, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
+                        response, getPackageNamespaceString(), function.getName()));
+            }
+            else
+            {
+                final CppType responseWithStatus = rspWithSts.makeGeneric(response);
+                function.setBody(format(rpcMethodBody, request, rpc.requestType(), rpc.responseType(), responseWithStatus.toString(),
+                        response, getPackageNamespaceString(), function.getName()));
+            }
         }
 
         methods.add(createStubInitializer(service, fields));
@@ -171,9 +225,7 @@ class ClientWorkerGenerator
             "    {1} WrappedRequest;",
             "    {0}->Dequeue(WrappedRequest);",
             "",
-            "    const {2}& WrappedResponse = ",
-            "        {3}(WrappedRequest.Request, WrappedRequest.Context);",
-            "    {0}->Enqueue(WrappedResponse);",
+            "    {3}(WrappedRequest.Request, WrappedRequest.Context, {0});",
             "'}'"
         ));
 
@@ -215,7 +267,6 @@ class ClientWorkerGenerator
     {
         return service.rpcs().stream()
             .map(rpc -> {
-                // Extract conduits (bidirectional queues)
                 final CppType compiledGenericConduit = conduitType.makeGeneric(
                     reqWithCtx.makeGeneric(provider.get(rpc.requestType())),
                     rspWithSts.makeGeneric(provider.get(rpc.responseType()))
@@ -237,9 +288,16 @@ class ClientWorkerGenerator
                 final CppType response = provider.get(rpc.responseType());
 
                 final CppArgument requestArg = new CppArgument(request.makeRef().makeConstant(), "Request");
+
                 final CppType responseType = rspWithSts.makeGeneric(response);
 
-                final CppFunction method = new CppFunction(rpc.name(), responseType, asList(requestArg, contextArg));
+                final CppType compiledGenericConduit = conduitType.makeGeneric(
+                    reqWithCtx.makeGeneric(provider.get(rpc.requestType())),
+                    rspWithSts.makeGeneric(provider.get(rpc.responseType()))
+                );
+                final CppArgument conduitArg = new CppArgument(compiledGenericConduit.makePtr(), "Conduit");
+
+                final CppFunction method = new CppFunction(rpc.name(), responseType, asList(requestArg, contextArg, conduitArg));
 
                 if (!rpc.documentation().isEmpty())
                     method.getJavaDoc().set(rpc.documentation());

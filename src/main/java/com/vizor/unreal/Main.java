@@ -78,20 +78,11 @@ public class Main
 
         final Converter converter = new Converter(config.getModuleName());
 
-        if (!srcPath.toFile().isDirectory())
-            throw new IllegalArgumentException("Source folder '" + srcPath + "' does not exist, or isn't a directory");
-
-        if (!dstPath.pathPublic.toFile().isDirectory())
-            throw new IllegalArgumentException("Destination Public folder '" + dstPath.pathPublic + "' does not exist, or isn't a directory");
-
-        if (!dstPath.pathPrivate.toFile().isDirectory())
-            throw new IllegalArgumentException("Destination Private folder '" + dstPath.pathPrivate + "' does not exist, or isn't a directory");
-
         log.info("Running cornerstone...");
         log.info("Logging level: {}", log.getLevel().toString());
         log.info("Source path: '{}'", srcPath);
-        log.info("Destination path: '{}'", dstPath);
-
+        log.info("Destination public path: '{}'", dstPath.pathPublic);
+        log.info("Destination private path: '{}'", dstPath.pathPrivate);
         if (!stringIsNullOrEmpty(config.getModuleName()))
         {
             log.info("Module name: '{}' (thus API is {}_API)", config.getModuleName(),
@@ -101,9 +92,19 @@ public class Main
         {
             log.info("Module name is empty (thus API won't be used)");
         }
-
-        log.info("Company name: {}", config.getCompanyName());
+        log.info("Precompiled header name: {}", config.getPrecompiledHeader());
         log.info("Wrappers path: %INCLUDE_DIR%/{}", config.getWrappersPath());
+        log.info("Company name: {}", config.getCompanyName());
+        log.info("No fork: {}", config.isNoFork());
+
+        if (!srcPath.toFile().isDirectory())
+            throw new IllegalArgumentException("Source folder '" + srcPath + "' does not exist, or isn't a directory");
+
+        if (!dstPath.pathPublic.toFile().isDirectory())
+            throw new IllegalArgumentException("Destination Public folder '" + dstPath.pathPublic + "' does not exist, or isn't a directory");
+
+        if (!dstPath.pathPrivate.toFile().isDirectory())
+            throw new IllegalArgumentException("Destination Private folder '" + dstPath.pathPrivate + "' does not exist, or isn't a directory");
 
         launchSingle(srcPath, dstPath, converter);
     }

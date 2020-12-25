@@ -58,6 +58,7 @@ import static com.vizor.unreal.tree.CppAnnotation.BlueprintReadWrite;
 import static com.vizor.unreal.tree.CppAnnotation.BlueprintType;
 import static com.vizor.unreal.tree.CppAnnotation.DisplayName;
 import static com.vizor.unreal.tree.CppAnnotation.Transient;
+import static com.vizor.unreal.tree.CppAnnotation.Category;
 import static com.vizor.unreal.tree.CppRecord.Residence.Cpp;
 import static com.vizor.unreal.tree.CppRecord.Residence.Header;
 import static com.vizor.unreal.tree.CppType.Kind.Enum;
@@ -65,6 +66,7 @@ import static com.vizor.unreal.tree.CppType.Kind.Struct;
 import static com.vizor.unreal.tree.CppType.plain;
 import static com.vizor.unreal.util.Misc.reorder;
 import static com.vizor.unreal.util.Misc.snakeCaseToCamelCase;
+import static com.vizor.unreal.util.Misc.dashToUnderscore;
 import static com.vizor.unreal.util.Misc.stringIsNullOrEmpty;
 import static com.vizor.unreal.util.Tuple.of;
 import static java.lang.String.join;
@@ -88,7 +90,7 @@ class ProtoProcessorArgs
 
         this.wrapperName = removeExtension(pathToProto.toFile().getName());
 
-        this.className = snakeCaseToCamelCase(wrapperName);
+        this.className = snakeCaseToCamelCase(dashToUnderscore(wrapperName));
 
 //        if (parse.packageName() == null)
 //            throw new RuntimeException("package filed in proto file is required for cornerstone");
@@ -126,7 +128,7 @@ class ProtoProcessor implements Runnable
         this.args = args;
         this.otherProcessorArgs = otherProcessorArgs;
     }
-    
+
     private Stream<ProtoProcessorArgs> GatherImportedProtos(final ProtoProcessorArgs proto, final List<ProtoProcessorArgs> otherProtos)
     {
         return otherProtos.stream()
@@ -136,7 +138,7 @@ class ProtoProcessor implements Runnable
     private Stream<ProtoProcessorArgs> GatherImportedProtosDeep(final ProtoProcessorArgs proto, final List<ProtoProcessorArgs> otherProtos)
     {
         final Stream<ProtoProcessorArgs> importedProtos = GatherImportedProtos(proto, otherProtos);
-        
+
         final List<ProtoProcessorArgs> argss = importedProtos.collect(Collectors.toList());
 
         return Stream.concat(Stream.of(proto), argss.stream().flatMap(importedProto->GatherImportedProtosDeep(importedProto, otherProtos))).distinct();
@@ -165,7 +167,7 @@ class ProtoProcessor implements Runnable
         final List<ServiceElement> services = args.parse.services();
 
         GatherTypes(args, otherProcessorArgs, ueProvider, protoProvider);
-        
+
 
         final List<Tuple<CppStruct, CppStruct>> castAssociations = new ArrayList<>();
         final List<CppStruct> unrealStructures = new ArrayList<>();
@@ -236,7 +238,7 @@ class ProtoProcessor implements Runnable
         // Should create an output directories if does not exit.
         @SuppressWarnings("unused")
         final boolean ignorePublic = dstPath.pathPublic.toFile().mkdirs();
-        
+
         @SuppressWarnings("unused")
         final boolean ignorePrivate = dstPath.pathPrivate.toFile().mkdirs();
 
@@ -247,7 +249,7 @@ class ProtoProcessor implements Runnable
             new CppInclude(Header, "GenUtils.h"),
             new CppInclude(Header, "RpcClient.h")
         ));
-        
+
         final List<String> importedProtoNames = GatherImportedProtos(args, otherProcessorArgs).map(
             importedProto -> {
                 return getHeaderPath(importedProto);
@@ -262,15 +264,17 @@ class ProtoProcessor implements Runnable
                 new CppInclude(Header, args.className + ".generated.h")
             );
         }
-        
+
         final Config config = Config.get();
 
-        // TODO: Fix paths
-        final String generatedIncludeName = join("/", config.getWrappersPath(),
-                removeExtension(pathToProtoStr)).replace("\\", pathSeparator);//, args.wrapperName);
+        String generatedIncludeName = config.getWrappersPath();
+        if (!stringIsNullOrEmpty(generatedIncludeName)) {
+            generatedIncludeName += pathSeparator;
+        }
+        generatedIncludeName += join(pathSeparator, pathToProtoStr, args.wrapperName);
 
         final String generatedHeaderPath = getHeaderPath(args);
-                
+
         final String castIncludeName = generatedHeaderPath + "Casts.h";
 
         // code. mutable to allow
@@ -291,7 +295,7 @@ class ProtoProcessor implements Runnable
             new CppInclude(Cpp, "GrpcIncludesEnd.h"),
             new CppInclude(Cpp, castIncludeName)
         ));
-        
+
         final List<CppRecord> castsIncludes = new ArrayList<>(asList(
             new CppInclude(Header, "CastUtils.h"),
 
@@ -316,12 +320,12 @@ class ProtoProcessor implements Runnable
 
         final DestinationConfig outFilePath = dstPath.append(args.className);
         final DestinationConfig outCastsFilePath = dstPath.append(args.className + "Casts");
-        
+
         try (final CppPrinter castsPrinter = new CppPrinter(outCastsFilePath, args.moduleName.toUpperCase(), HeaderType.Private))
         {
             castsIncludes.forEach(i -> i.accept(castsPrinter));
             castsPrinter.newLine();
-    
+
             // Write casts to the CPP file
             casts.accept(castsPrinter).newLine();
         }
@@ -363,7 +367,7 @@ class ProtoProcessor implements Runnable
     {
         // remove extension and fix slashes up
         final String pathToGeneratedHeaderDirectory = removeExtension(args.pathToProto.toString()).replace("\\", pathSeparator);
-                
+
         final String generatedHeaderPath = join(pathSeparator, pathToGeneratedHeaderDirectory, args.className);
 
         return generatedHeaderPath;
@@ -403,6 +407,7 @@ class ProtoProcessor implements Runnable
                 field.javaDoc.set(sourceDoc);
 
             field.addAnnotation(fieldAnnotations);
+            field.addAnnotation(Category, me.name());
             fields.add(field);
         }
 
@@ -437,9 +442,9 @@ class ProtoProcessor implements Runnable
     private CppType ueNamedType(final String serviceName, final TypeElement el)
     {
         if (el instanceof MessageElement)
-            return plain("F" + serviceName + "_" + el.name(), Struct);
+            return plain("F" + serviceName + "_" + dashToUnderscore(el.name()), Struct);
         else if (el instanceof EnumElement)
-            return plain("E" + serviceName + "_" + el.name(), Enum);
+            return plain("E" + serviceName + "_" + dashToUnderscore(el.name()), Enum);
         else
             throw new RuntimeException("Unknown type: '" + el.getClass().getName() + "'");
     }
