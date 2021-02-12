@@ -70,7 +70,10 @@ public final class Config
     private static Config config = null;
 
     @ConfigField
-    private String srcPath;
+    private List<String> protoSearchPaths;
+
+    @ConfigField
+    private List<String> protoIncludePaths;
 
     @ConfigField
     private String dstPublicPath;
@@ -96,15 +99,24 @@ public final class Config
     @ConfigField
     private boolean noFork;
 
-
-    public final String getSrcPath()
+    public final List<String> getProtoSearchPaths()
     {
-        return srcPath;
+        return protoSearchPaths;
     }
 
-    public void setSrcPath(String srcPath)
+    public void setProtoSearchPaths(List<String> protoSearchPaths)
     {
-        this.srcPath = srcPath;
+        this.protoSearchPaths = protoSearchPaths;
+    }
+
+    public final List<String> getProtoIncludePaths()
+    {
+        return protoIncludePaths;
+    }
+
+    public void setProtoIncludePaths(List<String> protoIncludePaths)
+    {
+        this.protoIncludePaths = protoIncludePaths;
     }
 
     public final String getDstPublicPath()
@@ -291,9 +303,16 @@ public final class Config
             throw new RuntimeException(failMessage);
     }
 
+    private void checkStringList(final List<String> strings, final String failMessage)
+    {
+        if (strings == null || strings.isEmpty() || strings.stream().anyMatch(string->stringIsNullOrEmpty(string)))
+            throw new RuntimeException(failMessage);
+    }
+
     public final void validate()
     {
-        checkString(srcPath, "srcPath must not be null or empty");
+        checkStringList(protoSearchPaths, "protoSearchPaths must not be null or empty");
+        checkStringList(protoIncludePaths, "protoIncludePaths must not be null or empty");
         checkString(dstPublicPath, "dstPublicPath must not be null or empty");
         checkString(dstPrivatePath, "dstPrivatePath must not be null or empty");
 

@@ -24,4 +24,10 @@ public final class DestinationConfig
 
     public Path pathPublic;
     public Path pathPrivate;
+
+    @Override
+    public String toString()
+    {
+        return "Public: " + pathPublic + " / Private: " + pathPrivate;
+    }
 }

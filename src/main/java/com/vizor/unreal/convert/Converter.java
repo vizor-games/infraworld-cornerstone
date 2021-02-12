@@ -25,9 +25,13 @@ import com.vizor.unreal.util.Tuple;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,6 +62,143 @@ public class Converter
         this.moduleName = moduleName;
     }
 
+    private static void gatherImportedPathsInternal(final Map<Path, List<Tuple<Path, DestinationConfig>>> visiblePaths,
+        final Map<Path, List<Tuple<Path, DestinationConfig>>> requestedPaths)
+    {
+        
+    }
+
+    private List<ProtoProcessorArgs> createArgs(final Path basePath, final Path pathToProto, final DestinationConfig destinationConfig)
+    {
+        String fileContent = null;
+
+        try 
+        {
+            fileContent = join(lineSeparator(), readAllLines(pathToProto));
+        }
+        catch (IOException ex)
+        {
+            throw new RuntimeException(ex);
+        }
+
+        final List<ProtoProcessorArgs> protoArgs = preProcess(parse(get(pathToProto.toString()), fileContent))
+        .stream()
+        .map(
+            protoFile -> 
+            {
+                final Path relativePath = basePath.relativize(pathToProto); 
+                return new ProtoProcessorArgs(protoFile, relativePath, destinationConfig, moduleName);
+            })
+        .collect(Collectors.toList());
+
+        return protoArgs;
+    }
+
+	public void convert(final Map<Path, List<Tuple<Path, DestinationConfig>>> visiblePaths,
+			final Map<Path, List<Tuple<Path, DestinationConfig>>> requestedPaths) {
+
+                // include-relative path to base path and full path and destination
+                Map<Path, Tuple<Path, Tuple<Path, DestinationConfig>>> importPathToPathSetupLookup = visiblePaths.entrySet().stream().flatMap((protoBasePathTuple)->{
+                    final Path basePath = protoBasePathTuple.getKey();
+                    final List<Tuple<Path, DestinationConfig>> protoPathTuples = protoBasePathTuple.getValue();
+                    return protoPathTuples.stream().map(protoPathTuple->{
+                        return Tuple.of(basePath, protoPathTuple);
+                    });
+                })
+                .collect(Collectors.toMap(tuple->tuple.first().relativize(tuple.second().first()), tuple->tuple));
+
+        // full path to base path and destination
+        final Map<Path, Tuple<Path, DestinationConfig>> pathsToActuallyLoad = new HashMap<>();
+
+        requestedPaths.forEach((basePath, pathTuples) -> {
+            pathTuples.forEach(pathTuple->{
+                pathsToActuallyLoad.put(pathTuple.first(), Tuple.of(basePath, pathTuple.second()));
+            });
+        });
+
+        while (true)
+{
+        final Map<Path, Tuple<Path, DestinationConfig>> pathsToActuallyLoadIter = new HashMap<>(pathsToActuallyLoad);
+        requestedPaths.forEach((basePath, protoPathTuples)-> {
+            protoPathTuples.forEach(protoPathTuple-> {
+                final List<ProtoProcessorArgs> args = createArgs(basePath, protoPathTuple.first(), protoPathTuple.second());
+
+                args
+                    .stream()
+                    .map(arg1->{return arg1.parse;})
+                    .flatMap(parse1->{return parse1.imports().stream();})
+                    .forEach(
+                        importPath->
+                        {
+                            final Tuple<Path, Tuple<Path, DestinationConfig>> importedTuple = importPathToPathSetupLookup.get(FileSystems.getDefault().getPath(importPath));
+                            
+if (!pathsToActuallyLoadIter.containsKey(importedTuple.first()))
+{
+pathsToActuallyLoadIter.put(importedTuple.second().first(), Tuple.of(importedTuple.first(), importedTuple.second().second()));
+}
+
+                        });
+            });
+        });
+
+        if (pathsToActuallyLoadIter.equals(pathsToActuallyLoad))
+        {
+            break;
+        }
+
+        pathsToActuallyLoad.putAll(pathsToActuallyLoadIter);
+    }
+
+        convert(pathsToActuallyLoad);
+	}
+
+    // full path to base path to destination
+	private void convert(final Map<Path, Tuple<Path, DestinationConfig>> pathsToActuallyLoad) {
+        
+        final List<ProtoProcessorArgs> protosToGenerate = new ArrayList<>();
+
+        pathsToActuallyLoad.forEach((pathToProto, basePathDestinationTuple) -> {
+            final Path basePath = basePathDestinationTuple.first();
+            final DestinationConfig pathToConverted = basePathDestinationTuple.second();
+
+            String fileContent = null;
+
+            try 
+            {
+                fileContent = join(lineSeparator(), readAllLines(pathToProto));
+            }
+            catch (IOException ex)
+            {
+                throw new RuntimeException(ex);
+            }
+    
+            
+            final List<ProtoProcessorArgs> protoArgs = preProcess(parse(get(pathToProto.toString()), fileContent))
+            .stream()
+            .map(
+                protoFile -> 
+                {
+                    final Path relativePath = basePath.relativize(pathToProto); 
+                    return new ProtoProcessorArgs(protoFile, relativePath, pathToConverted, moduleName);
+                })
+            .collect(Collectors.toList());
+
+            protosToGenerate.addAll(protoArgs);
+        });
+        
+        Stream<ProtoProcessorArgs> argsStream = protosToGenerate.stream();
+
+        if (!Config.get().isNoFork())
+        {
+            argsStream = argsStream.parallel();
+        }
+
+        argsStream.forEach(arg -> {
+            log.info("Converting {}", arg.pathToProto);
+            new ProtoProcessor(arg, protosToGenerate).run();
+        });
+    }
+
     public void convert(final Path srcPath, final List<Tuple<Path, DestinationConfig>> paths)
     {
         List<ProtoProcessorArgs> args = new ArrayList<>();
@@ -67,7 +208,7 @@ public class Converter
         pathsStream.forEach(pathPair -> {
             final Path pathToProto = pathPair.first();
             final DestinationConfig pathToConverted = pathPair.second();
-            
+
             String fileContent = null;
             
             try 

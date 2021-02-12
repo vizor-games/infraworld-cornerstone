@@ -50,7 +50,7 @@ public final class Graph<T>
         public String toString()
         {
             return "Following nodes cross-references each other: " +
-                    crossReferencedObjects.stream().distinct().map(Object::toString).collect(joining(", ", "[", "]"));
+                    crossReferencedObjects.stream().map(Object::toString).collect(joining(", ", "[", "]"));
         }
     }
 

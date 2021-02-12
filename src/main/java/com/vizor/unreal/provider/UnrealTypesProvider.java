@@ -44,6 +44,7 @@ public final class UnrealTypesProvider extends TypesProvider
         register("int32", plain("int32", Primitive), int.class);
         register("int64", plain("int64", Primitive), long.class);
         register("float", plain("float", Primitive), float.class);
+        register("double", plain("double", Primitive), double.class);
         register("bool", plain("bool", Primitive), boolean.class);
         register("void", plain("void", Primitive), void.class);
 
