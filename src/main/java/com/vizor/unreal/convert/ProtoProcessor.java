@@ -15,30 +15,14 @@
  */
 package com.vizor.unreal.convert;
 
-import com.squareup.wire.schema.internal.parser.EnumConstantElement;
-import com.squareup.wire.schema.internal.parser.EnumElement;
-import com.squareup.wire.schema.internal.parser.FieldElement;
-import com.squareup.wire.schema.internal.parser.MessageElement;
-import com.squareup.wire.schema.internal.parser.ProtoFileElement;
-import com.squareup.wire.schema.internal.parser.ServiceElement;
-import com.squareup.wire.schema.internal.parser.TypeElement;
+import com.squareup.wire.schema.internal.parser.*;
 import com.vizor.unreal.config.Config;
 import com.vizor.unreal.config.DestinationConfig;
 import com.vizor.unreal.provider.ProtoTypesProvider;
 import com.vizor.unreal.provider.TypesProvider;
 import com.vizor.unreal.provider.UnrealTypesProvider;
-import com.vizor.unreal.tree.CppAnnotation;
-import com.vizor.unreal.tree.CppClass;
-import com.vizor.unreal.tree.CppDelegate;
-import com.vizor.unreal.tree.CppEnum;
-import com.vizor.unreal.tree.CppField;
-import com.vizor.unreal.tree.CppNamespace;
-import com.vizor.unreal.tree.CppRecord;
-import com.vizor.unreal.tree.CppStruct;
-import com.vizor.unreal.tree.CppType;
+import com.vizor.unreal.tree.*;
 import com.vizor.unreal.tree.preprocessor.CppInclude;
-import com.vizor.unreal.tree.preprocessor.CppMacroIf;
-import com.vizor.unreal.tree.preprocessor.CppPragma;
 import com.vizor.unreal.util.MessageOrderResolver;
 import com.vizor.unreal.util.Tuple;
 import com.vizor.unreal.writer.CppPrinter;
@@ -48,7 +32,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -247,7 +230,12 @@ class ProtoProcessor implements Runnable
             new CppInclude(Header, "GenUtils.h"),
             new CppInclude(Header, "RpcClient.h")
         ));
-        
+
+        if(isHaveUnionField(unrealStructures))
+        {
+            headerIncludes.add(new CppInclude(Header, "Containers/Union.h"));
+        }
+
         final List<String> importedProtoNames = GatherImportedProtos(args, otherProcessorArgs).map(
             importedProto -> {
                 return getHeaderPath(importedProto);
@@ -406,6 +394,32 @@ class ProtoProcessor implements Runnable
             fields.add(field);
         }
 
+        for(final OneOfElement onf : me.oneOfs())
+        {
+            final CppType ueType = provider.get("oneof");
+
+            ueType.getUnionParams().addAll(onf.fields().stream().map(i ->
+            {
+                CppType t = provider.get(i.type());
+                t.setUnionName(i.name());
+                return t;
+            }).collect(Collectors.toList()));
+
+            final CppField field;
+
+            final String fieldName = provider.fixFieldName(onf.name(), ueType.isA(boolean.class));
+            field = new CppField(ueType, fieldName);
+
+            final String sourceDoc = onf.documentation();
+            if (!sourceDoc.isEmpty())
+                field.javaDoc.set(sourceDoc);
+
+            field.enableAnnotations(false);
+            //field.addAnnotation(fieldAnnotations);
+            fields.add(field);
+
+        }
+
         final CppStruct struct = new CppStruct(type, fields);
 
         struct.addAnnotation(DisplayName, args.className + " " + me.name());
@@ -471,9 +485,24 @@ class ProtoProcessor implements Runnable
         }
     }
 
-
     private CppType cppNamedType(final TypeElement el)
     {
         return cppNamedType(args.packageNamespace, el);
     }
+
+    private boolean isHaveUnionField(List<CppStruct> unrealStructures)
+    {
+        for (CppStruct unrealStructure : unrealStructures)
+        {
+            for(CppField unreadField : unrealStructure.getFields())
+            {
+                if(unreadField.getType().isUnion())
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }

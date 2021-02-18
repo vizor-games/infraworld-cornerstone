@@ -15,6 +15,7 @@
  */
 package com.vizor.unreal.provider;
 
+import com.sun.xml.internal.bind.v2.schemagen.xmlschema.Union;
 import com.vizor.unreal.tree.CppType;
 
 import java.nio.ByteBuffer;
@@ -56,6 +57,8 @@ public final class UnrealTypesProvider extends TypesProvider
 
         // 'bytes' -> TArray<uint8> (ByteBuffer because 'bytes' doesn't truly conforms to 'array').
         register("bytes", plain("FByteArray", Struct), ByteBuffer.class);
+
+        register("oneof", plain("TUnion", Struct), Union.class);
     }
 
     @Override

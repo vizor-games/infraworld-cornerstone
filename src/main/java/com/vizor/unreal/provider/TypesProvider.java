@@ -132,7 +132,7 @@ public abstract class TypesProvider
             throw new RuntimeException("Can't get a corresponding C++ type for " + typeName);
 
         // If we've got there, an output type must not be a wildcard generic, but compiled generics are allowed.
-        if (foundType.isGeneric() && foundType.isWildcardGeneric())
+        if (foundType.isWildcardGeneric())
             throw new RuntimeException(typeName + " was expected to be a compiled types, but it is actually a wildcard generic"
                     + foundType.toString());
 

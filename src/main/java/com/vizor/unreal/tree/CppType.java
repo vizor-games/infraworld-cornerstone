@@ -15,16 +15,10 @@
  */
 package com.vizor.unreal.tree;
 
-import com.squareup.wire.schema.internal.parser.ProtoFileElement;
+
 import com.vizor.unreal.writer.CppPrinter;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.vizor.unreal.tree.CppType.Kind.Wildcard;
 import static java.util.Arrays.asList;
@@ -101,6 +95,8 @@ public class CppType implements CtLeaf
 
     private final String name;
     private final List<CppType> genericParams;
+    private final List<CppType> unionParams;
+    private String unionName;
     private final Kind kind;
 
     /**
@@ -141,6 +137,7 @@ public class CppType implements CtLeaf
         this.kind = kind;
 
         this.genericParams = genericParams.isEmpty() ? emptyList() : new ArrayList<>(genericParams);
+        this.unionParams = new ArrayList<>();
 
         this.underType = underType;
         this.passage = passage;
@@ -172,6 +169,8 @@ public class CppType implements CtLeaf
     {
         return !genericParams.isEmpty();
     }
+
+    public final boolean isUnion() { return !unionParams.isEmpty(); }
 
     public final boolean isCompiledGeneric()
     {
@@ -232,6 +231,18 @@ public class CppType implements CtLeaf
             return emptyList();
 
         return unmodifiableList(genericParams);
+    }
+
+    public List<CppType> getUnionParams() {
+        return unionParams;
+    }
+
+    public String getUnionName() {
+        return unionName;
+    }
+
+    public void setUnionName(String unionName) {
+        this.unionName = unionName;
     }
 
     public Set<CppType> getFlatGenericArguments()
