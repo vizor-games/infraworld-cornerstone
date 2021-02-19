@@ -15,7 +15,6 @@
  */
 package com.vizor.unreal.provider;
 
-import com.sun.xml.internal.bind.v2.schemagen.xmlschema.Union;
 import com.vizor.unreal.tree.CppNamespace;
 import com.vizor.unreal.tree.CppType;
 import com.vizor.unreal.tree.CppType.Kind;
@@ -83,7 +82,7 @@ public final class ProtoTypesProvider extends TypesProvider
         register("string", plainNs("string", Struct, stdNs), String.class);
         register("map", genericNs("Map", Struct, 2, protobufNamespace), Map.class);
 
-        register("oneof", plainNs("union", Struct, protobufNamespace), Union.class);
+        register("oneof", plainNs("union", Struct, protobufNamespace));
 
         // because in protobuf (in C++) 'bytes' is actually an std::string :)
         registerAlias("bytes", "string");
