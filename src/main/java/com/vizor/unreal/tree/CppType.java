@@ -101,8 +101,8 @@ public class CppType implements CtLeaf
 
     private final String name;
     private final List<CppType> genericParams;
-    private final List<CppType> unionParams;
-    private String unionName;
+    private final List<CppType> variantParams;
+    private String variantName;
     private final Kind kind;
 
     /**
@@ -143,7 +143,7 @@ public class CppType implements CtLeaf
         this.kind = kind;
 
         this.genericParams = genericParams.isEmpty() ? emptyList() : new ArrayList<>(genericParams);
-        this.unionParams = new ArrayList<>();
+        this.variantParams = new ArrayList<>();
 
         this.underType = underType;
         this.passage = passage;
@@ -176,7 +176,7 @@ public class CppType implements CtLeaf
         return !genericParams.isEmpty();
     }
 
-    public final boolean isUnion() { return !unionParams.isEmpty(); }
+    public final boolean isVariant() { return !variantParams.isEmpty(); }
 
     public final boolean isCompiledGeneric()
     {
@@ -239,16 +239,16 @@ public class CppType implements CtLeaf
         return unmodifiableList(genericParams);
     }
 
-    public List<CppType> getUnionParams() {
-        return unionParams;
+    public List<CppType> getVariantParams() {
+        return variantParams;
     }
 
-    public String getUnionName() {
-        return unionName;
+    public String getVariantName() {
+        return variantName;
     }
 
-    public void setUnionName(String unionName) {
-        this.unionName = unionName;
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
     }
 
     public Set<CppType> getFlatGenericArguments()

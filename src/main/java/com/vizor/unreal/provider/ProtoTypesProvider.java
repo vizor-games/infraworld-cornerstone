@@ -82,7 +82,7 @@ public final class ProtoTypesProvider extends TypesProvider
         register("string", plainNs("string", Struct, stdNs), String.class);
         register("map", genericNs("Map", Struct, 2, protobufNamespace), Map.class);
 
-        register("oneof", plainNs("union", Struct, protobufNamespace));
+        register("oneof", plainNs("variant", Struct, protobufNamespace));
 
         // because in protobuf (in C++) 'bytes' is actually an std::string :)
         registerAlias("bytes", "string");

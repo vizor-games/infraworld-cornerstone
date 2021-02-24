@@ -57,7 +57,7 @@ public final class UnrealTypesProvider extends TypesProvider
         // 'bytes' -> TArray<uint8> (ByteBuffer because 'bytes' doesn't truly conforms to 'array').
         register("bytes", plain("FByteArray", Struct), ByteBuffer.class);
 
-        register("oneof", plain("TUnion", Struct));
+        register("oneof", plain("TVariant", Struct));
     }
 
     @Override

@@ -213,10 +213,10 @@ public class CppPrinter implements AutoCloseable
             type.getGenericParams().forEach(argument -> argument.accept(this).write(commaSeparator));
             backspace(commaSeparator.length()).write(">");
         }
-        else if(type.isUnion())
+        else if(type.isVariant())
         {
             write("<");
-            type.getUnionParams().forEach(key -> key.accept(this).write(commaSeparator));
+            type.getVariantParams().forEach(key -> key.accept(this).write(commaSeparator));
             backspace(commaSeparator.length()).write(">");
         }
 

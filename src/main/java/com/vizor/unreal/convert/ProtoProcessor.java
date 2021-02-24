@@ -246,9 +246,9 @@ class ProtoProcessor implements Runnable
             new CppInclude(Header, "RpcClient.h")
         ));
 
-        if(isHaveUnionField(unrealStructures))
+        if(isHaveVariantField(unrealStructures))
         {
-            headerIncludes.add(new CppInclude(Header, "Containers/Union.h"));
+            headerIncludes.add(new CppInclude(Header, "Misc/TVariant.h"));
         }
 
         final List<String> importedProtoNames = GatherImportedProtos(args, otherProcessorArgs).map(
@@ -413,10 +413,10 @@ class ProtoProcessor implements Runnable
         {
             final CppType ueType = provider.get("oneof");
 
-            ueType.getUnionParams().addAll(onf.fields().stream().map(i ->
+            ueType.getVariantParams().addAll(onf.fields().stream().map(i ->
             {
                 CppType t = provider.get(i.type());
-                t.setUnionName(i.name());
+                t.setVariantName(provider.fixFieldName(i.name(), ueType.isA(boolean.class)));
                 return t;
             }).collect(Collectors.toList()));
 
@@ -505,13 +505,13 @@ class ProtoProcessor implements Runnable
         return cppNamedType(args.packageNamespace, el);
     }
 
-    private boolean isHaveUnionField(List<CppStruct> unrealStructures)
+    private boolean isHaveVariantField(List<CppStruct> unrealStructures)
     {
         for (CppStruct unrealStructure : unrealStructures)
         {
             for(CppField unreadField : unrealStructure.getFields())
             {
-                if(unreadField.getType().isUnion())
+                if(unreadField.getType().isVariant())
                 {
                     return true;
                 }
