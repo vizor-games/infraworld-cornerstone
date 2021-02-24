@@ -18,7 +18,13 @@ package com.vizor.unreal.tree;
 
 import com.vizor.unreal.writer.CppPrinter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.vizor.unreal.tree.CppType.Kind.Wildcard;
 import static java.util.Arrays.asList;

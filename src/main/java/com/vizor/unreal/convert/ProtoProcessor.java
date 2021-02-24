@@ -15,13 +15,28 @@
  */
 package com.vizor.unreal.convert;
 
-import com.squareup.wire.schema.internal.parser.*;
+import com.squareup.wire.schema.internal.parser.EnumConstantElement;
+import com.squareup.wire.schema.internal.parser.EnumElement;
+import com.squareup.wire.schema.internal.parser.FieldElement;
+import com.squareup.wire.schema.internal.parser.MessageElement;
+import com.squareup.wire.schema.internal.parser.ProtoFileElement;
+import com.squareup.wire.schema.internal.parser.ServiceElement;
+import com.squareup.wire.schema.internal.parser.TypeElement;
+import com.squareup.wire.schema.internal.parser.OneOfElement;
 import com.vizor.unreal.config.Config;
 import com.vizor.unreal.config.DestinationConfig;
 import com.vizor.unreal.provider.ProtoTypesProvider;
 import com.vizor.unreal.provider.TypesProvider;
 import com.vizor.unreal.provider.UnrealTypesProvider;
-import com.vizor.unreal.tree.*;
+import com.vizor.unreal.tree.CppAnnotation;
+import com.vizor.unreal.tree.CppClass;
+import com.vizor.unreal.tree.CppDelegate;
+import com.vizor.unreal.tree.CppEnum;
+import com.vizor.unreal.tree.CppField;
+import com.vizor.unreal.tree.CppNamespace;
+import com.vizor.unreal.tree.CppRecord;
+import com.vizor.unreal.tree.CppStruct;
+import com.vizor.unreal.tree.CppType;
 import com.vizor.unreal.tree.preprocessor.CppInclude;
 import com.vizor.unreal.util.MessageOrderResolver;
 import com.vizor.unreal.util.Tuple;

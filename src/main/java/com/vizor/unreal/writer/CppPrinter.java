@@ -16,7 +16,19 @@
 package com.vizor.unreal.writer;
 
 import com.vizor.unreal.config.DestinationConfig;
-import com.vizor.unreal.tree.*;
+import com.vizor.unreal.tree.CppArgument;
+import com.vizor.unreal.tree.CppClass;
+import com.vizor.unreal.tree.CppDelegate;
+import com.vizor.unreal.tree.CppEnum;
+import com.vizor.unreal.tree.CppEnumElement;
+import com.vizor.unreal.tree.CppField;
+import com.vizor.unreal.tree.CppFunction;
+import com.vizor.unreal.tree.CppJavaDoc;
+import com.vizor.unreal.tree.CppNamespace;
+import com.vizor.unreal.tree.CppRecord;
+import com.vizor.unreal.tree.CppRecordContainer;
+import com.vizor.unreal.tree.CppStruct;
+import com.vizor.unreal.tree.CppType;
 import com.vizor.unreal.tree.preprocessor.CppInclude;
 import com.vizor.unreal.tree.preprocessor.CppMacroIf;
 import com.vizor.unreal.tree.preprocessor.CppPragma;
