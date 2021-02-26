@@ -53,6 +53,10 @@ public class MessageOrderResolver
                 fieldType.getFlatGenericArguments().stream()
                     .filter(cache::contains)
                     .forEach(genericArg -> graph.addEdge(genericArg, struct.getType()));
+
+                fieldType.getFlatVariantArguments().stream()
+                        .filter(cache::contains)
+                        .forEach(variantArg -> graph.addEdge(variantArg, struct.getType()));
             }
         }
 

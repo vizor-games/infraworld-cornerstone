@@ -276,6 +276,31 @@ public class CppType implements CtLeaf
         return flatTypes;
     }
 
+    public Set<CppType> getFlatVariantArguments()
+    {
+        if (!isVariant())
+            return emptySet();
+
+        final Set<CppType> flatTypes = new HashSet<>();
+
+        final List<CppType> upperLevel = new ArrayList<>(variantParams);
+        final List<CppType> currentLevel = new ArrayList<>();
+
+        while (!upperLevel.isEmpty())
+        {
+            flatTypes.addAll(upperLevel);
+
+            upperLevel.forEach(t -> currentLevel.addAll(t.variantParams));
+
+            upperLevel.clear();
+            upperLevel.addAll(currentLevel);
+
+            currentLevel.clear();
+        }
+
+        return flatTypes;
+    }
+
     public final Kind getKind()
     {
         return kind;
