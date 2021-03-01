@@ -430,7 +430,6 @@ class ProtoProcessor implements Runnable
                 field.javaDoc.set(sourceDoc);
 
             field.enableAnnotations(false);
-            //field.addAnnotation(fieldAnnotations);
             fields.add(field);
 
         }
