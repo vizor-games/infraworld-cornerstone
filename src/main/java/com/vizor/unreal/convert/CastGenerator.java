@@ -21,13 +21,13 @@ import com.vizor.unreal.tree.CppFunction;
 import com.vizor.unreal.tree.CppNamespace;
 import com.vizor.unreal.tree.CppStruct;
 import com.vizor.unreal.tree.CppType;
-import com.vizor.unreal.tree.CppRecord.Residence;
 import com.vizor.unreal.util.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.concurrent.atomic.AtomicInteger;
+import com.vizor.unreal.util.TriFunction;
 
 import static com.vizor.unreal.tree.CppRecord.Residence.Header;
 import static com.vizor.unreal.tree.CppType.Kind.Enum;
@@ -95,7 +95,7 @@ class CastGenerator
     }
 
     private CppFunction generateCast(final CppStruct inStruct, final CppStruct outStruct,
-                                     final BiFunction<CppField, CppField, String> genFunction)
+                                     final TriFunction<CppField, CppField, CppType, String> genFunction)
     {
         final CppType inType = inStruct.getType();
         final CppType outType = outStruct.getType();
@@ -126,7 +126,7 @@ class CastGenerator
                         firstType.toString()));
             }
 
-            body.append(genFunction.apply(firstField, secondField));
+            body.append(genFunction.apply(firstField, secondField, inType));
 
             if (generateCastComments)
                 body.append(lineSeparator());
@@ -147,7 +147,7 @@ class CastGenerator
         return castFunction;
     }
 
-    private String generateProtoToUeCast(CppField inField, CppField outField)
+    private String generateProtoToUeCast(CppField inField, CppField outField, CppType inStructType)
     {
         final CppType inType = inField.getType();
         final CppType outType = outField.getType();
@@ -167,6 +167,22 @@ class CastGenerator
             return format(castPattern, outField.getName(), params.stream().map(CppType::toString).collect(joining(", ")),
                     inField.getName());
         }
+        else if(inType.isVariant())
+        {
+            StringBuilder switchBody = new StringBuilder(String.format("switch (%s.%s_case())",inputItemName,inField.getName()));
+            switchBody.append(lineSeparator()).append('{').append(lineSeparator());
+
+            List<CppType> outParams = outField.getType().getVariantParams();
+            List<CppType> inParams = inField.getType().getVariantParams();
+            for(int i=0; i<outParams.size(); i++)
+            {
+                switchBody.append(String.format("\tcase %s::%sCase::k%s:",inStructType.toString(),outField.getName(), capitalise(outParams.get(i).getVariantName()))).append(lineSeparator());
+                switchBody.append(String.format("\t\t%s.%s.Set<%s>(Proto_Cast<%s>(%s.%s()));",outputItemName,outField.getName(),outParams.get(i).toString(),outParams.get(i).toString(),inputItemName,inParams.get(i).getVariantName())).append(lineSeparator());
+                switchBody.append("\t\tbreak;").append(lineSeparator());
+            }
+            switchBody.append('}');
+            return switchBody.toString();
+        }
         else
         {
             final String castedTypename = outType.isArray() ?
@@ -178,7 +194,7 @@ class CastGenerator
         }
     }
 
-    private String generateUeToProtoCast(CppField inField, CppField outField)
+    private String generateUeToProtoCast(CppField inField, CppField outField, CppType inStructType)
     {
         final CppType inType = inField.getType();
         final CppType outType = outField.getType();
@@ -216,6 +232,27 @@ class CastGenerator
         {
             final String pattern = outputItemName + ".mutable_{0}()->CopyFrom(" + castMethod.getMethodName() + "<{1}>(" + inputItemName + ".{2}));";
             completeCast =  format(pattern, outField.getName(), paramsArgs, inField.getName());
+        }
+        else if(inType.isVariant())
+        {
+            StringBuilder switchBody = new StringBuilder(String.format("switch (InItem.%s.GetIndex())",inField.getName()));
+            switchBody.append(lineSeparator()).append('{').append(lineSeparator());
+            AtomicInteger index = new AtomicInteger(0);
+            outField.getType().getVariantParams().forEach(param -> {
+                switchBody.append(String.format("\tcase %d:",index.get())).append(lineSeparator());
+                if(isMessageNamespace(param.toString()))
+                {
+                    switchBody.append(String.format("\t\t%s.set_allocated_%s(new %s(Proto_Cast<%s>(%s.%s.Get<%s>())));",outputItemName,param.getVariantName(),param.toString(),param.toString(),inputItemName,inField.getName(),inField.getType().getVariantParams().get(index.get()).toString())).append(lineSeparator());
+                }
+                else
+                {
+                    switchBody.append(String.format("\t\t%s.set_%s(Proto_Cast<%s>(%s.%s.Get<%s>()));",outputItemName,param.getVariantName(),param.toString(),inputItemName,inField.getName(),inField.getType().getVariantParams().get(index.get()).toString())).append(lineSeparator());
+                }
+                switchBody.append("\t\tbreak;").append(lineSeparator());
+                index.getAndIncrement();
+            });
+            switchBody.append('}');
+            return switchBody.toString();
         }
         else
         {
@@ -282,4 +319,12 @@ class CastGenerator
             return CastMethod.Cast;
         }
     }
+
+    private String capitalise(String s)
+    {
+        return s.substring(0, 1).toUpperCase() + s.substring(1);
+    }
+
+    private boolean isMessageNamespace(String namespaceType) { return !(namespaceType.contains("std::") || namespaceType.contains("google::protobuf::")); }
+
 }

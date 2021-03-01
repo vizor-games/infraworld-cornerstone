@@ -15,7 +15,7 @@
  */
 package com.vizor.unreal.tree;
 
-import com.squareup.wire.schema.internal.parser.ProtoFileElement;
+
 import com.vizor.unreal.writer.CppPrinter;
 
 import java.util.ArrayList;
@@ -101,6 +101,8 @@ public class CppType implements CtLeaf
 
     private final String name;
     private final List<CppType> genericParams;
+    private final List<CppType> variantParams;
+    private String variantName;
     private final Kind kind;
 
     /**
@@ -141,6 +143,7 @@ public class CppType implements CtLeaf
         this.kind = kind;
 
         this.genericParams = genericParams.isEmpty() ? emptyList() : new ArrayList<>(genericParams);
+        this.variantParams = new ArrayList<>();
 
         this.underType = underType;
         this.passage = passage;
@@ -172,6 +175,8 @@ public class CppType implements CtLeaf
     {
         return !genericParams.isEmpty();
     }
+
+    public final boolean isVariant() { return !variantParams.isEmpty(); }
 
     public final boolean isCompiledGeneric()
     {
@@ -234,6 +239,18 @@ public class CppType implements CtLeaf
         return unmodifiableList(genericParams);
     }
 
+    public List<CppType> getVariantParams() {
+        return variantParams;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
+    }
+
     public Set<CppType> getFlatGenericArguments()
     {
         if (!isGeneric())
@@ -249,6 +266,31 @@ public class CppType implements CtLeaf
             flatTypes.addAll(upperLevel);
 
             upperLevel.forEach(t -> currentLevel.addAll(t.genericParams));
+
+            upperLevel.clear();
+            upperLevel.addAll(currentLevel);
+
+            currentLevel.clear();
+        }
+
+        return flatTypes;
+    }
+
+    public Set<CppType> getFlatVariantArguments()
+    {
+        if (!isVariant())
+            return emptySet();
+
+        final Set<CppType> flatTypes = new HashSet<>();
+
+        final List<CppType> upperLevel = new ArrayList<>(variantParams);
+        final List<CppType> currentLevel = new ArrayList<>();
+
+        while (!upperLevel.isEmpty())
+        {
+            flatTypes.addAll(upperLevel);
+
+            upperLevel.forEach(t -> currentLevel.addAll(t.variantParams));
 
             upperLevel.clear();
             upperLevel.addAll(currentLevel);

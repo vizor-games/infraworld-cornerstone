@@ -35,7 +35,6 @@ import com.vizor.unreal.tree.preprocessor.CppPragma;
 import com.vizor.unreal.writer.annotation.DummyDecoratorWriter;
 import com.vizor.unreal.writer.annotation.UEDecoratorWriter;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -212,6 +211,12 @@ public class CppPrinter implements AutoCloseable
         {
             write("<");
             type.getGenericParams().forEach(argument -> argument.accept(this).write(commaSeparator));
+            backspace(commaSeparator.length()).write(">");
+        }
+        else if(type.isVariant())
+        {
+            write("<");
+            type.getVariantParams().forEach(key -> key.accept(this).write(commaSeparator));
             backspace(commaSeparator.length()).write(">");
         }
 
