@@ -69,7 +69,7 @@ Limitations
 Despite the fact, that both [proto2](https://developers.google.com/protocol-buffers/docs/proto3) and
 [proto3](https://developers.google.com/protocol-buffers/docs/proto2) syntaxes are supported, there's several limitations applied to your code:
 
-- No support for [oneof](https://developers.google.com/protocol-buffers/docs/proto3#oneof) fields yet.
+- [oneof](https://developers.google.com/protocol-buffers/docs/proto3#oneof) fields are supported, but generated UE4 equivalent [TVariant] is not supported by blueprints.
 - No support for [group](https://developers.google.com/protocol-buffers/docs/proto#nested) statement yet.
 - No support for nested containers, e.g. you can't delcare a `map<map<int32, string>, string>`, because it isn't supported in UE4,
 note that you **can** use `bytes` (which is actually a container type) for map's key and/or value type, `bytes` field can be `repeated`.
