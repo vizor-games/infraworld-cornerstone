@@ -229,7 +229,7 @@ class ProtoProcessor implements Runnable
         }
 
         final String pathToProtoStr = removeExtension(args.pathToProto.toString());
-        DestinationConfig dstPath = Config.get().getDstPath().append(pathToProtoStr);
+        DestinationConfig dstPath = Config.get().getDstPath();
 
         // Should create an output directories if does not exit.
         @SuppressWarnings("unused")
@@ -268,11 +268,16 @@ class ProtoProcessor implements Runnable
         
         final Config config = Config.get();
 
+        final String publicIncludePath = config.getIncludePath();
+        
         // TODO: Fix paths
-        final String generatedIncludeName = join("/", config.getWrappersPath(),
-                removeExtension(pathToProtoStr)).replace("\\", pathSeparator);//, args.wrapperName);
+        
+        final String generatedIncludeNamePublic = join("/", config.getWrappersPath(),
+                removeExtension(pathToProtoStr)).replace("\\", pathSeparator);
+        
+        final String generatedIncludeName =  publicIncludePath + "/" + generatedIncludeNamePublic;//, args.wrapperName);
 
-        final String generatedHeaderPath = getHeaderPath(args);
+        final String generatedHeaderPath = join("/", publicIncludePath, args.className);
                 
         final String castIncludeName = generatedHeaderPath + "Casts.h";
 
@@ -300,12 +305,12 @@ class ProtoProcessor implements Runnable
 
             new CppInclude(Header, "GrpcIncludesBegin.h"),
 
-            new CppInclude(Header, generatedIncludeName + ".pb.h", false),
-            new CppInclude(Header, generatedIncludeName + ".grpc.pb.h", false),
+            new CppInclude(Header, generatedIncludeNamePublic + ".pb.h", false),
+            new CppInclude(Header, generatedIncludeNamePublic + ".grpc.pb.h", false),
 
             new CppInclude(Header, "GrpcIncludesEnd.h"),
 
-            new CppInclude(Header, generatedHeaderPath + ".h")
+            new CppInclude(Header, args.className + ".h")
         ));
 
         castsIncludes.addAll(
@@ -320,7 +325,7 @@ class ProtoProcessor implements Runnable
         final DestinationConfig outFilePath = dstPath.append(args.className);
         final DestinationConfig outCastsFilePath = dstPath.append(args.className + "Casts");
         
-        try (final CppPrinter castsPrinter = new CppPrinter(outCastsFilePath, args.moduleName.toUpperCase(), HeaderType.Private))
+        try (final CppPrinter castsPrinter = new CppPrinter(outCastsFilePath, args.moduleName.toUpperCase(), HeaderType.Public))
         {
             castsIncludes.forEach(i -> i.accept(castsPrinter));
             castsPrinter.newLine();

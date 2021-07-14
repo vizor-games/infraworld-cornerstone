@@ -71,6 +71,9 @@ public final class Config
 
     @ConfigField
     private String srcPath;
+    
+    @ConfigField
+    private String includePath;
 
     @ConfigField
     private String dstPublicPath;
@@ -105,6 +108,16 @@ public final class Config
     public void setSrcPath(String srcPath)
     {
         this.srcPath = srcPath;
+    }
+    
+    public final String getIncludePath()
+    {
+        return includePath;
+    }
+
+    public void setIncludePath(String includePath)
+    {
+        this.includePath = includePath;
     }
 
     public final String getDstPublicPath()
@@ -294,6 +307,7 @@ public final class Config
     public final void validate()
     {
         checkString(srcPath, "srcPath must not be null or empty");
+        checkString(includePath, "includePath must not be null or empty");
         checkString(dstPublicPath, "dstPublicPath must not be null or empty");
         checkString(dstPrivatePath, "dstPrivatePath must not be null or empty");
 
